@@ -35,11 +35,17 @@ export class Memory {
         this.INTERNAL_DATA = [...Array(2 ** 16).keys()].map(() => new Byte());
     }
 
-    public getWord(dByte: DoubleByte) {
-        return this.INTERNAL_DATA[dByte.toNumber()];
+    public getWord(pointer: DoubleByte) {
+        return this.INTERNAL_DATA[pointer.toNumber()];
     }
 
-    public setWord(dByte: DoubleByte, value: Byte) {
-        this.INTERNAL_DATA[dByte.toNumber()] = value;
+    public setWord(pointer: DoubleByte, value: Byte) {
+        this.INTERNAL_DATA[pointer.toNumber()] = value;
     }
+
+    public setDoubleWord(pointer: DoubleByte, value: DoubleByte) {
+        this.INTERNAL_DATA[pointer.toNumber()] = value.hi;
+        this.INTERNAL_DATA[pointer.toNumber() + 1] = value.lo;
+    }
+
 }

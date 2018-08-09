@@ -13,4 +13,8 @@ export class Bit {
     public flip(): void {
         this.on = !this.on;
     }
+
+    public copy(b: Bit) {
+        this.on = b.on;
+    }
 }
