@@ -44,6 +44,7 @@ export class Byte {
 
     private setByNumber(byte: number) {
         if (byte < 0 || byte > 255) {throw new Error(`Byte ${byte} out of bounds!`); }
-        this.INTERNAL_DATA = byte.toString(2).split('').map(Number).map((i: number) => new Bit(i));
+        const binary = byte.toString(2).split('').map(i => parseInt(i, 2));
+        this.INTERNAL_DATA = binary.map((i) => new Bit(i));
     }
 }

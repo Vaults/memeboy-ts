@@ -10,7 +10,7 @@ export class DoubleByte {
     }
 
     public static OF(dByte: number) {
-        const lo = dByte % 255;
+        const lo = dByte % 256;
         const hi = (dByte - lo) / 256;
         return new DoubleByte(new Byte(hi), new Byte(lo));
     }

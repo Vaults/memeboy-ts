@@ -6,16 +6,14 @@ export class ALU {
     private flags: Byte;
 
     private A: Byte;
-    private HL: Byte;
 
     private F: Bit;
     private N: Bit;
     private H: Bit;
     private C: Bit;
 
-    constructor(A: Byte, HL: Byte, flags: Byte) {
+    constructor(A: Byte, flags: Byte) {
         this.A = A;
-        this.HL = HL;
         this.flags = flags;
         this.F = flags.getBit(0);
         this.N = flags.getBit(1);

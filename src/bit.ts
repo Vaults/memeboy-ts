@@ -2,7 +2,7 @@ export class Bit {
     private on: boolean;
 
     constructor(value: number = 0) {
-        if (!(value === 0 || value === 1)) { throw new Error('INVALID NUMBER GIVEN TO BIT'); }
+        if (!(value === 0 || value === 1)) { throw new Error('INVALID NUMBER GIVEN TO BIT: ' + value); }
         this.on = value === 1;
     }
 
