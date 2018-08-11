@@ -1,24 +1,12 @@
 import {Bit} from './bit';
 import {Byte} from './byte';
+import {RegisterRegistry} from './register-registry';
 
 export class ALU {
+    private registerRegistry: RegisterRegistry;
 
-    private flags: Byte;
-
-    private A: Byte;
-
-    private F: Bit;
-    private N: Bit;
-    private H: Bit;
-    private C: Bit;
-
-    constructor(A: Byte, flags: Byte) {
-        this.A = A;
-        this.flags = flags;
-        this.F = flags.getBit(0);
-        this.N = flags.getBit(1);
-        this.H = flags.getBit(2);
-        this.C = flags.getBit(3);
+    constructor(registerRegistry: RegisterRegistry) {
+        this.registerRegistry = registerRegistry;
     }
 
     public add(b: Byte): void { }

@@ -19,6 +19,8 @@ export class OpCodeRegistry {
     constructor(r: RegisterRegistry, m: Memory){
         this.r = r;
         this.m = m;
+        this.stack = new Stack(m);
+        this.alu = new ALU(this.r);
     }
 
     private add(byte: number, logic: (data?: Byte | DoubleByte) => void, cycles: number, dataBytes?: number){
@@ -113,6 +115,17 @@ export class OpCodeRegistry {
         //EI
         this.add(0xFB, () => {/* TODO */}, 4);
 
+        //RRCA
+        this.add(0x0F, () => {
+            this.r.FC.copy(this.r.A.getBit(0));
+            this.r.A.rotate(1);
+        }, 4);
+
+        //RLCA
+        this.add(0x07, () => {
+            this.r.FC.copy(this.r.A.getBit(7));
+            this.r.A.rotate(-1);
+        }, 4);
 
         const checkInitialized = (opCodes: {[key: number] : OpCode}, iden: string) => {
             if (Object.keys(opCodes).length !== 255) {

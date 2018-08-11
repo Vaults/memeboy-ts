@@ -59,6 +59,14 @@ export class Byte {
         this.copy(swapped);
     }
 
+    public rotate(shift: number){
+        const bitMask = (2 ** 8) - 1;
+        const rot = shift & 7;
+        const num: number = this.toNumber();
+        const rotated : number = ((num >>> rot) | (num << (8 - rot))) & bitMask;
+        this.setByNumber(rotated);
+    }
+
     private safeOverflow(n: number): number{
         return trueModulo(n, 256);
     }
