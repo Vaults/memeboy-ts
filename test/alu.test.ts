@@ -4,7 +4,7 @@ import {ALU} from '../src/alu';
 describe('constructor', () => {
     // TODO
     it('test', () => {
-        const alu: ALU = new ALU(new Byte(255), new Byte(255));
+        const alu: ALU = new ALU(Byte.OF(255), Byte.OF(255));
         alu.add(null);
     });
 });

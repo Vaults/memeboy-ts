@@ -5,9 +5,11 @@ import {Memory} from './memory';
 import {OpCode} from './op-code';
 import {Stack} from './stack';
 import {ALU} from './alu';
-import {padZero} from './lib/util';
+import {numberToHex, padZero, range} from './lib/util';
 
 export class CPU {
+
+    private static readonly EXTERNAL_OPS: number = 0xCB;
 
     //Usually for data transferring
     private B: Byte = new Byte();
@@ -30,12 +32,13 @@ export class CPU {
     private FH: Bit = new Bit();
     private FC: Bit = new Bit();
 
-    private F: Byte = Byte.OF([this.FZ, this.FN, this.FC, this.FH, new Bit(0), new Bit(0), new Bit(0), new Bit(0)]);
+    private F: Byte = new Byte([this.FZ, this.FN, this.FC, this.FH, new Bit(0), new Bit(0), new Bit(0), new Bit(0)]);
     private AF: DoubleByte = new DoubleByte(this.A, this.F);
 
     private PC: DoubleByte = DoubleByte.OF(0x0100);
 
     private opCodes: {[key: number] : OpCode} = {};
+    private extendedOpCodes: {[key: number] : OpCode} = {};
     private memory: Memory;
     private stack: Stack;
     private alu: ALU;
@@ -51,11 +54,19 @@ export class CPU {
     }
 
     private initializeOpcodes(): void {
+
+        //TODO: FLAG LOGIC
         const add = (byte: number, logic: (data?: Byte | DoubleByte) => void, cycles: number) => {
             if (this.opCodes[byte] !== undefined) {
-                throw new Error(`OPCODE NUMBER ${byte.toString(16).toUpperCase()} DEFINED TWICE!`);
+                throw new Error(`OPCODE NUMBER ${numberToHex(byte)} DEFINED TWICE!`);
             }
             this.opCodes[byte] = {logic, cycles};
+        };
+        const addExt = (byte: number, logic: (data?: Byte | DoubleByte) => void, cycles: number) => {
+            if (this.extendedOpCodes[byte] !== undefined) {
+                throw new Error(`EXT OPCODE NUMBER ${numberToHex(byte)} DEFINED TWICE!`);
+            }
+            this.extendedOpCodes[byte] = {logic, cycles};
         };
 
 
@@ -83,36 +94,36 @@ export class CPU {
         });
 
         //LD r1,r2
-        add(0x7E, () => { this.A = this.memory.getWord(this.HL); }, 8);
-        add(0x46, () => { this.B = this.memory.getWord(this.HL); }, 8);
-        add(0x4E, () => { this.C = this.memory.getWord(this.HL); }, 8);
-        add(0x56, () => { this.D = this.memory.getWord(this.HL); }, 8);
-        add(0x5E, () => { this.E = this.memory.getWord(this.HL); }, 8);
-        add(0x66, () => { this.H = this.memory.getWord(this.HL); }, 8);
-        add(0x6E, () => { this.L = this.memory.getWord(this.HL); }, 8);
+        add(0x7E, () => this.A = this.memory.getWord(this.HL), 8);
+        add(0x46, () => this.B = this.memory.getWord(this.HL), 8);
+        add(0x4E, () => this.C = this.memory.getWord(this.HL), 8);
+        add(0x56, () => this.D = this.memory.getWord(this.HL), 8);
+        add(0x5E, () => this.E = this.memory.getWord(this.HL), 8);
+        add(0x66, () => this.H = this.memory.getWord(this.HL), 8);
+        add(0x6E, () => this.L = this.memory.getWord(this.HL), 8);
 
-        add(0x70, () => { this.memory.setWord(this.HL, this.B); }, 4);
-        add(0x71, () => { this.memory.setWord(this.HL, this.C); }, 4);
-        add(0x72, () => { this.memory.setWord(this.HL, this.D); }, 4);
-        add(0x73, () => { this.memory.setWord(this.HL, this.E); }, 4);
-        add(0x74, () => { this.memory.setWord(this.HL, this.H); }, 4);
-        add(0x75, () => { this.memory.setWord(this.HL, this.L); }, 4);
-        add(0x36, (data: Byte) => { this.memory.setWord(this.HL, data); }, 8);
+        add(0x70, () => this.memory.setWord(this.HL, this.B), 4);
+        add(0x71, () => this.memory.setWord(this.HL, this.C), 4);
+        add(0x72, () => this.memory.setWord(this.HL, this.D), 4);
+        add(0x73, () => this.memory.setWord(this.HL, this.E), 4);
+        add(0x74, () => this.memory.setWord(this.HL, this.H), 4);
+        add(0x75, () => this.memory.setWord(this.HL, this.L), 4);
+        add(0x36, (data: Byte) => this.memory.setWord(this.HL, data), 8);
 
         //LD A,n
-        add(0x0A, () => { this.A = this.memory.getWord(this.BC); }, 8);
-        add(0x1A, () => { this.A = this.memory.getWord(this.DE); }, 8);
-        add(0xFA, (data: DoubleByte) => { this.A = this.memory.getWord(data); }, 16);
-        add(0x3E, (data: Byte) => { this.A = data; }, 8);
+        add(0x0A, () => this.A = this.memory.getWord(this.BC), 8);
+        add(0x1A, () => this.A = this.memory.getWord(this.DE), 8);
+        add(0xFA, (data: DoubleByte) => this.A = this.memory.getWord(data), 16);
+        add(0x3E, (data: Byte) => this.A = data, 8);
 
         //LD n,A
-        add(0x02, () => { this.memory.setWord(this.BC, this.A); }, 8);
-        add(0x12, () => { this.memory.setWord(this.DE, this.A); }, 8);
-        add(0xEA, (data: DoubleByte) => { this.memory.setWord(data, this.A); }, 16);
+        add(0x02, () => this.memory.setWord(this.BC, this.A), 8);
+        add(0x12, () => this.memory.setWord(this.DE, this.A), 8);
+        add(0xEA, (data: DoubleByte) => this.memory.setWord(data, this.A), 16);
 
         //LD A,(C)
-        add(0xF2, () => { this.A = this.memory.getWord(DoubleByte.OF(0xFF00).add(this.C)); }, 8);
-        add(0xE2, () => { this.memory.setWord(DoubleByte.OF(0xFF00).add(this.C), this.A); }, 8);
+        add(0xF2, () => this.A = this.memory.getWord(DoubleByte.OF(0xFF00).add(this.C)), 8);
+        add(0xE2, () => this.memory.setWord(DoubleByte.OF(0xFF00).add(this.C), this.A), 8);
 
         //LDA,(HLD), LD A,(HL-), LDD A,(HL) and reverse
         add(0x3A, () => { this.A = this.memory.getWord(this.HL); this.HL.decrement(); }, 8);
@@ -122,17 +133,17 @@ export class CPU {
         add(0x2A, () => { this.A = this.memory.getWord(this.HL); this.HL.increment(); }, 8);
         add(0x22, () => { this.memory.setWord(this.HL, this.A); this.HL.increment(); }, 8);
         //LDH (n),A
-        add(0xE0, (data: Byte) => { this.A = this.memory.getWord(DoubleByte.OF(0xFF00).add(data)); }, 12);
-        add(0xF0, (data: Byte) => { this.memory.setWord(DoubleByte.OF(0xFF00).add(data), this.A); }, 12);
+        add(0xE0, (data: Byte) => this.A = this.memory.getWord(DoubleByte.OF(0xFF00).add(data)), 12);
+        add(0xF0, (data: Byte) => this.memory.setWord(DoubleByte.OF(0xFF00).add(data), this.A), 12);
 
         //LD n,nn
-        add(0x01, (data: DoubleByte) => { this.BC = data; }, 12);
-        add(0x11, (data: DoubleByte) => { this.DE = data; }, 12);
-        add(0x21, (data: DoubleByte) => { this.HL = data; }, 12);
-        add(0x31, (data: DoubleByte) => { this.stack.setPointer(data); }, 12);
+        add(0x01, (data: DoubleByte) => this.BC = data, 12);
+        add(0x11, (data: DoubleByte) => this.DE = data, 12);
+        add(0x21, (data: DoubleByte) => this.HL = data, 12);
+        add(0x31, (data: DoubleByte) => this.stack.setPointer(data), 12);
 
         //LD SP,HL
-        add(0xF9, () => { this.stack.setPointer(this.HL); }, 8);
+        add(0xF9, () => this.stack.setPointer(this.HL), 8);
 
         //LD HL,SP+n
         add(0xF8, () => {} /*TODO*/, 12);
@@ -141,16 +152,16 @@ export class CPU {
         add(0x08, (data: DoubleByte) => this.stack.pushDouble(data), 20);
 
         //PUSH nn
-        add(0xF5, () => { this.stack.pushDouble(new DoubleByte(this.A, this.F)); }, 16);
-        add(0xC5, () => { this.stack.pushDouble(this.BC); }, 16);
-        add(0xD5, () => { this.stack.pushDouble(this.DE); }, 16);
-        add(0xE5, () => { this.stack.pushDouble(this.HL); }, 16);
+        add(0xF5, () => this.stack.pushDouble(new DoubleByte(this.A, this.F)), 16);
+        add(0xC5, () => this.stack.pushDouble(this.BC), 16);
+        add(0xD5, () => this.stack.pushDouble(this.DE), 16);
+        add(0xE5, () => this.stack.pushDouble(this.HL), 16);
 
         //POP nn
-        add(0xF1, () => { this.AF = this.stack.popDouble(); }, 12);
-        add(0xC1, () => { this.BC = this.stack.popDouble(); }, 12);
-        add(0xD1, () => { this.DE = this.stack.popDouble(); }, 12);
-        add(0xE1, () => { this.HL = this.stack.popDouble(); }, 12);
+        add(0xF1, () => this.AF = this.stack.popDouble(), 12);
+        add(0xC1, () => this.BC = this.stack.popDouble(), 12);
+        add(0xD1, () => this.DE = this.stack.popDouble(), 12);
+        add(0xE1, () => this.HL = this.stack.popDouble(), 12);
 
         const aluMap: {[key: string] : number[][]} = {
             A: [[0x87, 4], [0x8F, 4], [0x97, 4], [0x9F, 4], [0xA7, 4], [0xB7, 4], [0xAF, 4], [0xBF, 4], [0x3C, 4], [0x3D, 4]],
@@ -181,12 +192,92 @@ export class CPU {
             }
         });
 
-        if (Object.keys(this.opCodes).length !== 255) {
-            const numbers = new Array(255).fill('').map((_, i) => i).filter(i => this.opCodes[i] != null);
-            const numberList = numbers.map(i =>i.toString(16)).map(s => padZero(s, 2).toUpperCase()).join(',');
-            const message: string = `Not all opcodes were initialized (missing ${numbers.length})! Missing opcodes: ${numberList}`;
-            throw new Error(message);
+        //ADD HL,n
+        add(0x09, () => { /* TODO */ }, 8);
+        add(0x19, () => { /* TODO */ }, 8);
+        add(0x29, () => { /* TODO */ }, 8);
+        add(0x39, () => { /* TODO */ }, 8);
+
+        //ADD SP,n
+        add(0xE8, () => { /* TODO */ }, 16);
+
+        //INC nn
+        add(0x03, () => this.BC.increment(), 8);
+        add(0x13, () => this.DE.increment(), 8);
+        add(0x23, () => this.HL.increment(), 8);
+        add(0x33, () => this.stack.increment(), 8);
+
+        //DEC nn
+        add(0x0B, () => this.BC.decrement(), 8);
+        add(0x1B, () => this.DE.decrement(), 8);
+        add(0x2B, () => this.HL.decrement(), 8);
+        add(0x3B, () => this.stack.decrement(), 8);
+
+        //SWAP n
+        addExt(0x37, () => this.A.swap(), 8);
+        addExt(0x30, () => this.B.swap(), 8);
+        addExt(0x31, () => this.C.swap(), 8);
+        addExt(0x32, () => this.D.swap(), 8);
+        addExt(0x33, () => this.E.swap(), 8);
+        addExt(0x34, () => this.H.swap(), 8);
+        addExt(0x35, () => this.L.swap(), 8);
+        addExt(0x36, () => this.memory.getWord(this.HL).swap(), 16);
+
+        //DAA
+        add(0x27, () => {/* TODO */}, 4);
+
+        //CPL
+        add(0x2F, () => this.A.flip(), 4);
+
+        //CCF
+        add(0x3F, () => this.FC.flip(), 4);
+
+        //SCF
+        add(0x37, () => this.FC.setState(0), 4);
+
+        //NOP
+        add(0x00, () => {}, 4);
+
+        //HALT
+        add(0x76, () => this.halt(), 4);
+
+        //STOP
+        add(0x10, () => this.stop(), 4);
+
+        //DI
+        add(0xF3, () => this.disableInterrupts(), 4);
+
+        //EI
+        add(0xFB, () => this.enableInterrupts(), 4);
+
+
+        const checkInitialized = (opCodes: {[key: number] : OpCode}, iden: string) => {
+            if (Object.keys(opCodes).length !== 255) {
+                const numbers = range(0, 256).filter(i => opCodes[i] === undefined);
+                const numberList = numbers.map(i => numberToHex(i)).join(',');
+                const message: string = `Not all ${iden}opcodes were initialized (missing ${numbers.length})! Missing ${iden}opcodes: ${numberList}`;
+                console.warn(message);
+            }
         }
+
+        checkInitialized(this.opCodes, '');
+        checkInitialized(this.extendedOpCodes, 'extended');
+
+    }
+
+    private halt(): void {
+
+    }
+
+    private stop(): void{
+
+    }
+
+    private disableInterrupts() {
+
+    }
+
+    private enableInterrupts() {
 
     }
 
@@ -198,4 +289,7 @@ export class CPU {
             throw new Error(`Opcode ${opCode} does not exist!`);
         }
     }
+
+
+
 }

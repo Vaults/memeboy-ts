@@ -19,6 +19,14 @@ export class Stack {
         this.pointer = data;
     }
 
+    public increment(){
+        this.pointer.increment();
+    }
+
+    public decrement(){
+        this.pointer.decrement();
+    }
+
     //No types on runtime :(
     public popDouble(): DoubleByte {
         return new DoubleByte(this.popSingle(), this.popSingle());
@@ -26,7 +34,7 @@ export class Stack {
 
     public popSingle(): Byte {
         const popped: Byte = this.memory.getWord(this.pointer);
-        this.pointer.increment();
+        this.increment();
         return popped;
     }
 
@@ -37,7 +45,7 @@ export class Stack {
 
     public pushSingle(data: Byte): void {
         this.memory.setWord(this.pointer, data);
-        this.pointer.decrement();
+        this.decrement();
     }
 
 }

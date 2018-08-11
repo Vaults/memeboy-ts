@@ -1,3 +1,7 @@
 import {Main} from '../src/main';
 
-new Main();
+describe('starts without errors', () => {
+   it('does', () => {
+       new Main();
+   })
+});

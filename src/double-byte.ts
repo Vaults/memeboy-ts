@@ -12,7 +12,7 @@ export class DoubleByte {
     public static OF(dByte: number) {
         const lo = dByte % 256;
         const hi = (dByte - lo) / 256;
-        return new DoubleByte(new Byte(hi), new Byte(lo));
+        return new DoubleByte(Byte.OF(hi), Byte.OF(lo));
     }
 
     public toNumber(): number {
