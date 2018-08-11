@@ -13,5 +13,8 @@
   "collectCoverageFrom": [
     "src/**/*.{ts,js}",
     "!src/**/*.d.ts"
+  ],
+  "testPathIgnorePatterns":[
+    ".*/test-helpers/.*"
   ]
 }

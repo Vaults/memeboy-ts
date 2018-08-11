@@ -24,9 +24,11 @@ export class DoubleByte {
         this.lo.copy(dByte.lo);
     }
 
-    public add(byte: Byte): DoubleByte {
-        //TODO
-        return this;
+    public add(byte: Byte) {
+        this.lo.add(byte);
+        if (this.lo.toNumber() === 0) {
+            this.hi.increment();
+        }
     }
 
     public decrement(): void {

@@ -27,12 +27,13 @@
 
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
+import {range} from './lib/util';
 
 export class Memory {
     private INTERNAL_DATA: Byte[] = [];
 
     constructor() {
-        this.INTERNAL_DATA = [...Array(2 ** 16).keys()].map(() => new Byte());
+        this.INTERNAL_DATA = range(0, 2 ** 16).map(() => Byte.OF(~~(Math.random() * 256)));
     }
 
     public getWord(pointer: DoubleByte) {

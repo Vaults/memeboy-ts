@@ -1,55 +1,57 @@
+import {ALU} from './alu';
 import {Bit} from './bit';
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
+import {numberToHex, range} from './lib/util';
 import {Memory} from './memory';
 import {OpCode} from './op-code';
 import {Stack} from './stack';
-import {ALU} from './alu';
-import {numberToHex, padZero, range} from './lib/util';
 
 export class CPU {
 
     private static readonly EXTERNAL_OPS: number = 0xCB;
 
     //Usually for data transferring
-    private B: Byte = new Byte();
-    private C: Byte = new Byte();
-    private BC: DoubleByte;
+    public B: Byte = new Byte();
+    public C: Byte = new Byte();
+    public BC: DoubleByte;
     //Regular registers
-    private D: Byte = new Byte();
-    private E: Byte = new Byte();
-    private DE: DoubleByte;
+    public D: Byte = new Byte();
+    public E: Byte = new Byte();
+    public DE: DoubleByte;
     //Indirect addressing
-    private H: Byte = new Byte();
-    private L: Byte = new Byte();
-    private HL: DoubleByte;
+    public H: Byte = new Byte();
+    public L: Byte = new Byte();
+    public HL: DoubleByte;
 
     //Accumulator
-    private A: Byte = new Byte();
+    public A: Byte = new Byte();
     //Flags
-    private FZ: Bit = new Bit();
-    private FN: Bit = new Bit();
-    private FH: Bit = new Bit();
-    private FC: Bit = new Bit();
+    public FZ: Bit = new Bit();
+    public FN: Bit = new Bit();
+    public FH: Bit = new Bit();
+    public FC: Bit = new Bit();
 
-    private F: Byte = new Byte([this.FZ, this.FN, this.FC, this.FH, new Bit(0), new Bit(0), new Bit(0), new Bit(0)]);
-    private AF: DoubleByte = new DoubleByte(this.A, this.F);
+    public F: Byte = new Byte([this.FZ, this.FN, this.FC, this.FH, new Bit(0), new Bit(0), new Bit(0), new Bit(0)]);
+    public AF: DoubleByte = new DoubleByte(this.A, this.F);
 
-    private PC: DoubleByte = DoubleByte.OF(0x0100);
+    public PC: DoubleByte = DoubleByte.OF(0x0100);
 
     private opCodes: {[key: number] : OpCode} = {};
     private extendedOpCodes: {[key: number] : OpCode} = {};
     private memory: Memory;
     private stack: Stack;
     private alu: ALU;
+    private bootRom: Byte[];
 
-    constructor(memory: Memory, stack: Stack) {
+    constructor(memory: Memory, stack: Stack, bootRom: Byte[]) {
         this.memory = memory;
         this.stack = stack;
         this.BC = new DoubleByte(this.B, this.C);
         this.DE = new DoubleByte(this.D, this.E);
         this.HL = new DoubleByte(this.H, this.L);
         this.alu = new ALU(this.A, this.F);
+        this.bootRom = bootRom;
         this.initializeOpcodes();
     }
 
@@ -133,8 +135,8 @@ export class CPU {
         add(0x2A, () => { this.A = this.memory.getWord(this.HL); this.HL.increment(); }, 8);
         add(0x22, () => { this.memory.setWord(this.HL, this.A); this.HL.increment(); }, 8);
         //LDH (n),A
-        add(0xE0, (data: Byte) => this.A = this.memory.getWord(DoubleByte.OF(0xFF00).add(data)), 12);
-        add(0xF0, (data: Byte) => this.memory.setWord(DoubleByte.OF(0xFF00).add(data), this.A), 12);
+        /*add(0xE0, (data: Byte) => this.A = this.memory.getWord(DoubleByte.OF(0xFF00).add(data)), 12);
+        add(0xF0, (data: Byte) => this.memory.setWord(DoubleByte.OF(0xFF00).add(data), this.A), 12);*/
 
         //LD n,nn
         add(0x01, (data: DoubleByte) => this.BC = data, 12);
@@ -255,7 +257,7 @@ export class CPU {
             if (Object.keys(opCodes).length !== 255) {
                 const numbers = range(0, 256).filter(i => opCodes[i] === undefined);
                 const numberList = numbers.map(i => numberToHex(i)).join(',');
-                const message: string = `Not all ${iden}opcodes were initialized (missing ${numbers.length})! Missing ${iden}opcodes: ${numberList}`;
+                const message: string = `Not all ${iden}opcodes were initialized (missing ${numbers.length})!\n Missing ${iden}opcodes: ${numberList}`;
                 console.warn(message);
             }
         }
@@ -264,6 +266,20 @@ export class CPU {
         checkInitialized(this.extendedOpCodes, 'extended');
 
     }
+
+    public executeOpCode(opCode: Byte, data?: Byte | DoubleByte) {
+        if (this.opCodes[opCode.toNumber()]) {
+            this.opCodes[opCode.toNumber()].logic(data);
+            //TODO: do something with the cycles
+        } else {
+            throw new Error(`Opcode ${numberToHex(opCode.toNumber())} does not exist!`);
+        }
+    }
+
+    public executeBootRom(){
+        this.bootRom.forEach(byte => this.executeOpCode(byte));
+    }
+
 
     private halt(): void {
 
@@ -281,14 +297,6 @@ export class CPU {
 
     }
 
-    private executeOpCode(opCode: Byte, data?: Byte | DoubleByte) {
-        if (this.opCodes[opCode.toNumber()]) {
-            this.opCodes[opCode.toNumber()].logic(data);
-            //TODO: do something with the cycles
-        } else {
-            throw new Error(`Opcode ${opCode} does not exist!`);
-        }
-    }
 
 
 

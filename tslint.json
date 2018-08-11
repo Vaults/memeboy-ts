@@ -15,6 +15,7 @@
     "no-bitwise": false,
     "adjacent-overload-signatures": false,
     "no-string-literal": false,
+    "insecure-random": false,
     "trailing-comma": [
       false,
       {
