@@ -1,19 +1,26 @@
+import {Byte} from './byte';
 import {CPU} from './cpu';
+import {DoubleByte} from './double-byte';
 import {Memory} from './memory';
 import {Stack} from './stack';
-import {DoubleByte} from './double-byte';
-import {Byte} from './byte';
+import {RegisterRegistry} from './register-registry';
+import {OpCodeRegistry} from './opcodes/op-code-registry';
 
 export class GameboyClassic {
     private cpu: CPU;
     private memory: Memory;
     private stack: Stack;
+    private registerRegistry: RegisterRegistry;
+    private opcodeRegistry: OpCodeRegistry;
 
 
     constructor(bootRom: Byte[]) {
         this.memory = new Memory();
         this.stack = new Stack(this.memory);
-        this.cpu = new CPU(this.memory, this.stack, bootRom);
+        this.registerRegistry = new RegisterRegistry();
+        this.opcodeRegistry = new OpCodeRegistry(this.registerRegistry, this.memory);
+        this.opcodeRegistry.initializeOpcodes();
+        this.cpu = new CPU(this.opcodeRegistry, bootRom);
     }
 
     public start() {
@@ -21,11 +28,11 @@ export class GameboyClassic {
     }
 
     private startCartridge(): void {
-        this.cpu.A.copy(Byte.OF(0x01));
-        this.cpu.F.copy(Byte.OF(0xB0));
-        this.cpu.BC.copy(DoubleByte.OF(0x0013));
-        this.cpu.DE.copy(DoubleByte.OF(0x00D8));
-        this.cpu.HL.copy(DoubleByte.OF(0x014D));
+        this.registerRegistry.A.copy(Byte.OF(0x01));
+        this.registerRegistry.F.copy(Byte.OF(0xB0));
+        this.registerRegistry.BC.copy(DoubleByte.OF(0x0013));
+        this.registerRegistry.DE.copy(DoubleByte.OF(0x00D8));
+        this.registerRegistry.HL.copy(DoubleByte.OF(0x014D));
         this.memory.setWord(DoubleByte.OF(0xFF05), Byte.OF(0x00)) //TIMA
         this.memory.setWord(DoubleByte.OF(0xFF06), Byte.OF(0x00)) //TMA
         this.memory.setWord(DoubleByte.OF(0xFF07), Byte.OF(0x00)) //TAC

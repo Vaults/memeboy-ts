@@ -6,7 +6,7 @@ describe('starts without errors', () => {
    it('does', done => {
        new NodeFileReader().getBootRom((bytes: Byte[]) => {
            const gb = new GameboyClassic(bytes);
-           //gb.start();
+           gb.start();
            done();
        });
    });
