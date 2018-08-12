@@ -20,9 +20,9 @@ export class CPU {
             const nextByte = this.bootRom.pop();
             if (nextByte.toNumber() !== CPU.EXTENDED_OPS){
                 const opCode: OpCode = this.opCodeRegistry.getOpCode(nextByte);
-                if (opCode.dataBytes == 0) {
+                if (opCode.dataBytes === 0) {
                     opCode.logic();
-                } else if(opCode.dataBytes == 1) {
+                } else if (opCode.dataBytes === 1) {
                     opCode.logic(this.bootRom.pop());
                 } else {
                     opCode.logic(new DoubleByte(this.bootRom.pop(), this.bootRom.pop()));

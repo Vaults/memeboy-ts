@@ -31,9 +31,11 @@ import {range} from './lib/util';
 
 export class Memory {
     private INTERNAL_DATA: Byte[] = [];
+    private observers: {[location: number]: ((location: DoubleByte, data: Byte) => void)[]}
 
     constructor() {
         this.INTERNAL_DATA = range(0, 2 ** 16).map(() => Byte.OF(~~(Math.random() * 256)));
+        this.observers = range(0, 2 ** 16).map(() => []);
     }
 
     public getWord(pointer: DoubleByte) {
@@ -42,11 +44,22 @@ export class Memory {
 
     public setWord(pointer: DoubleByte, value: Byte) {
         this.INTERNAL_DATA[pointer.toNumber()] = value;
+        this.observers[pointer.toNumber()].forEach(observer => observer(pointer, value));
     }
 
     public setDoubleWord(pointer: DoubleByte, value: DoubleByte) {
         this.INTERNAL_DATA[pointer.toNumber()] = value.hi;
         this.INTERNAL_DATA[pointer.toNumber() + 1] = value.lo;
+    }
+
+    public attachObserverToLocation(location: DoubleByte, callback: (location: DoubleByte, data: Byte) => void) {
+        this.observers[location.toNumber()].push(callback);
+    }
+
+    public attachObserverToRegion(region: DoubleByte[], callback: (location: DoubleByte, data: Byte) => void){
+        region.forEach((loc: DoubleByte) => {
+            this.attachObserverToLocation(loc, callback);
+        })
     }
 
 }

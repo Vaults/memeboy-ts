@@ -173,6 +173,7 @@ export class OpCodeRegistry {
                 if (key === '_HL') {
                     value = this.m.getWord(this.r.HL);
                 } else {
+                    // @ts-ignore
                     value = this[key];
                 }
                 funcList.forEach(((func: (b: Byte) => void, index: number) => {
@@ -256,7 +257,9 @@ export class OpCodeRegistry {
         this.add(0xEA, (data: DoubleByte) => this.m.setWord(data, this.r.A), 16, 2);
 
         //LD A,(C)
+        // @ts-ignore
         this.add(0xF2, () => this.r.A = this.m.getWord(DoubleByte.OF(0xFF00).add(this.r.C)), 8);
+        // @ts-ignore
         this.add(0xE2, () => this.m.setWord(DoubleByte.OF(0xFF00).add(this.r.C), this.r.A), 8);
 
         //LDA,(HLD), LD A,(HL-), LDD A,(HL) and reverse

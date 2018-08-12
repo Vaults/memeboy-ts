@@ -15,6 +15,7 @@
     "!src/**/*.d.ts"
   ],
   "testPathIgnorePatterns":[
-    ".*/test-helpers/.*"
+    ".*/test-helpers/.*",
+    ".*/system-test/.*"
   ]
 }

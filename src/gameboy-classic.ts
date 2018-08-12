@@ -5,26 +5,38 @@ import {Memory} from './memory';
 import {Stack} from './stack';
 import {RegisterRegistry} from './register-registry';
 import {OpCodeRegistry} from './opcodes/op-code-registry';
+import {IRenderer} from './video/i-renderer';
+import {GPU} from './video/gpu';
 
 export class GameboyClassic {
+
+    private operational: boolean = false;
+
     private cpu: CPU;
+    private gpu: GPU;
     private memory: Memory;
     private stack: Stack;
     private registerRegistry: RegisterRegistry;
     private opcodeRegistry: OpCodeRegistry;
+    private renderer: IRenderer;
 
-
-    constructor(bootRom: Byte[]) {
+    constructor(bootRom: Byte[], renderer: IRenderer) {
         this.memory = new Memory();
         this.stack = new Stack(this.memory);
         this.registerRegistry = new RegisterRegistry();
         this.opcodeRegistry = new OpCodeRegistry(this.registerRegistry, this.memory);
         this.opcodeRegistry.initializeOpcodes();
         this.cpu = new CPU(this.opcodeRegistry, bootRom);
+        this.gpu = new GPU(this.memory);
+        this.renderer = renderer;
+        renderer.setGpu(this.gpu);
     }
 
     public start() {
+        this.operational = true;
         this.cpu.executeBootRom();
+        const renderLoop = () => {this.renderer.render(); if(this.operational){setTimeout(renderLoop, 1000 / 60);} }
+        renderLoop();
     }
 
     private startCartridge(): void {
@@ -65,4 +77,7 @@ export class GameboyClassic {
         this.memory.setWord(DoubleByte.OF(0xFFFF), Byte.OF(0x00)) //IE
     }
 
+    stop() {
+        this.operational = false;
+    }
 }
