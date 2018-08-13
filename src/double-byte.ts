@@ -10,9 +10,9 @@ export class DoubleByte {
     }
 
     public static OF(dByte: number) {
-        const lo = dByte % 256;
-        const hi = (dByte - lo) / 256;
-        return new DoubleByte(Byte.OF(hi), Byte.OF(lo));
+        const doubleByte = new DoubleByte(new Byte(), new Byte());
+        doubleByte.setByNumber(dByte);
+        return doubleByte;
     }
 
     public toNumber(): number {
@@ -25,10 +25,10 @@ export class DoubleByte {
     }
 
     public add(byte: Byte) {
-        this.lo.add(byte);
-        if (this.lo.toNumber() === 0) {
+        if (this.lo.toNumber() + byte.toNumber() >= 256){
             this.hi.increment();
         }
+        this.lo.add(byte);
     }
 
     public decrement(): void {
@@ -43,6 +43,13 @@ export class DoubleByte {
         if (this.lo.toNumber() === 0) {
             this.hi.increment();
         }
+    }
+
+    private setByNumber(dByte: number): void {
+        const lo = dByte % 256;
+        const hi = (dByte - lo) / 256;
+        this.lo.copy(Byte.OF(lo));
+        this.hi.copy(Byte.OF(hi));
     }
 
 }

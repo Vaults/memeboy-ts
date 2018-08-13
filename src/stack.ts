@@ -1,6 +1,6 @@
+import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
 import {Memory} from './memory';
-import {Byte} from './byte';
 
 export class Stack {
     private memory: Memory;

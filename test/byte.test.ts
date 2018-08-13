@@ -8,6 +8,13 @@ function forEachByte(func: (i: number) => void) {
     TEST_ARRAY.forEach(func);
 }
 
+function referentialIntegrity(pre: Byte, transformer: (b: Byte) => void){
+    const byte: Byte = Byte.OF(255);
+    const bits : Bit[] = range(0, 8).map(i => byte.getBit(i));
+    transformer(byte);
+    bits.forEach((o, i) => expect(byte.getBit(i)).toBe(o));
+}
+
 describe('constructor', () => {
     it('undefined bits', () => {
         expect(() => new Byte(undefined)).not.toThrow();
@@ -66,10 +73,7 @@ describe('flip', () => {
         })
     });
     it('referential integrity', () => {
-        const byte: Byte = Byte.OF(255);
-        const bits : Bit[] = range(0, 8).map(i => byte.getBit(i));
-        byte.flip();
-        bits.forEach((o, i) => expect(byte.getBit(i)).toBe(o));
+        referentialIntegrity(Byte.OF(0), b => b.flip())
     })
 });
 
@@ -85,10 +89,7 @@ describe('swap', () => {
         });
     });
     it('referential integrity', () => {
-        const byte: Byte = Byte.OF(255);
-        const bits : Bit[] = range(0, 8).map(i => byte.getBit(i));
-        byte.swap();
-        bits.forEach((o, i) => expect(byte.getBit(i)).toBe(o));
+        referentialIntegrity(Byte.OF(0), b => b.swap())
     });
 });
 
@@ -126,10 +127,37 @@ describe('increment/decrement', () => {
     });
 
     it('referential integrity', () => {
-        const byte: Byte = Byte.OF(255);
-        const bits : Bit[] = range(0, 8).map(i => byte.getBit(i));
-        byte.increment();
-        byte.decrement();
-        bits.forEach((o, i) => expect(byte.getBit(i)).toBe(o));
+        referentialIntegrity(Byte.OF(0), b => {b.increment(); b.decrement()})
+    });
+});
+
+describe('copy', () => {
+    it('copies properly with referential integrity', () => {
+        const byte: Byte = Byte.OF(0);
+        referentialIntegrity(Byte.OF(0), b => {
+            byte.copy(Byte.OF(255));
+            range(0, 8).forEach(i => expect(byte.getBit(i).val()).toBe(1));
+        });
+    });
+});
+
+describe('rotate', () => {
+    it('simple test case', () => {
+        const byte: Byte = Byte.OF(16);
+        byte.rotate(-1);
+        expect(byte.toNumber()).toBe(32);
+    });
+    it('rotates around', () => {
+        forEachByte(i => {
+            const byte: Byte = Byte.OF(i);
+            byte.rotate(8);
+            expect(byte.toNumber()).toBe(i);
+            byte.rotate(-8);
+            expect(byte.toNumber()).toBe(i);
+        })
+    });
+    it('referential integrity', () => {
+        const byte: Byte = Byte.OF(20);
+        referentialIntegrity(byte, b => b.rotate(5));
     });
 });

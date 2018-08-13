@@ -9,6 +9,12 @@ export class TileMap {
     private region: DoubleByte[];
 
     constructor(sets: TileSet[], region: DoubleByte[]){
+        if (region.length !== 1024){
+            throw new Error(`Invalid region size! ${region.length}`);
+        }
+        if (sets.length !== 256){
+            throw new Error(`Invalid sets size! ${sets.length}`);
+        }
         this.sets = sets;
         this.region = region;
     }

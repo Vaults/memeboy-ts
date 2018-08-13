@@ -9,12 +9,12 @@ export class Bit {
         return this.on ? 1 : 0;
     }
 
-    public setState(value: number){
+    public setState(value: number) {
         if (!(value === 0 || value === 1)) { throw new Error(`INVALID NUMBER GIVEN TO BIT: ${value}`); }
         this.on = value === 1;
     }
 
-    public isSet(): boolean{
+    public isSet(): boolean {
         return this.on;
     }
 

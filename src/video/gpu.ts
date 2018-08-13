@@ -38,9 +38,9 @@ export class GPU {
             this.tileSets.push(tileSet);
         });
 
-        this.mapZero = new TileMap(this.tileSets.slice(0, 256), this.region(0x9800, 0x9BFF));
+        this.mapZero = new TileMap(this.tileSets.slice(0, 256), this.region(0x9800, 0x9C00));
         this.memory.attachObserverToRegion(this.mapZero.getRegion(), () => this.mapZero.update(memory));
-        this.mapOne = new TileMap(this.tileSets.slice(128, 128 * 3), this.region(0x9C00, 0x9FFF));
+        this.mapOne = new TileMap(this.tileSets.slice(128, 128 * 3), this.region(0x9C00, 0xA000));
         this.memory.attachObserverToRegion(this.mapOne.getRegion(), () => this.mapOne.update(memory));
     }
 
