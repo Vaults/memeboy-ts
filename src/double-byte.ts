@@ -32,11 +32,17 @@ export class DoubleByte {
     }
 
     public decrement(): void {
-        //TODO
+        this.lo.decrement();
+        if (this.lo.toNumber() === 255) {
+            this.hi.decrement();
+        }
     }
 
     public increment(): void {
-        //TODO
+        this.lo.increment();
+        if (this.lo.toNumber() === 0) {
+            this.hi.increment();
+        }
     }
 
 }

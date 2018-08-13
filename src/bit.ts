@@ -14,6 +14,10 @@ export class Bit {
         this.on = value === 1;
     }
 
+    public isSet(): boolean{
+        return this.on;
+    }
+
     public flip(): void {
         this.on = !this.on;
     }

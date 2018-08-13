@@ -6,6 +6,7 @@ import {DoubleByte} from '../double-byte';
 import {numberToHex, range} from '../lib/util';
 import {ALU} from '../alu';
 import {Stack} from '../stack';
+import {DEBUG} from '../lib/debug';
 
 export class OpCodeRegistry {
     public opCodes: {[key: number] : OpCode} = {};
@@ -42,6 +43,7 @@ export class OpCodeRegistry {
 
         this.initializeOpcodesLoad();
         this.initializeOpcodesAlu();
+        this.initializeOpcodesJump();
         this.initializeOpcodesExtended();
 
         //PUSH nn
@@ -51,10 +53,10 @@ export class OpCodeRegistry {
         this.add(0xE5, () => this.stack.pushDouble(this.r.HL), 16);
 
         //POP nn
-        this.add(0xF1, () => this.r.AF = this.stack.popDouble(), 12);
-        this.add(0xC1, () => this.r.BC = this.stack.popDouble(), 12);
-        this.add(0xD1, () => this.r.DE = this.stack.popDouble(), 12);
-        this.add(0xE1, () => this.r.HL = this.stack.popDouble(), 12);
+        this.add(0xF1, () => this.r.AF.copy(this.stack.popDouble()), 12);
+        this.add(0xC1, () => this.r.BC.copy(this.stack.popDouble()), 12);
+        this.add(0xD1, () => this.r.DE.copy(this.stack.popDouble()), 12);
+        this.add(0xE1, () => this.r.HL.copy(this.stack.popDouble()), 12);
 
 
         //this.add HL,n
@@ -132,7 +134,7 @@ export class OpCodeRegistry {
                 const numbers = range(0, 256).filter(i => opCodes[i] === undefined);
                 const numberList = numbers.map(i => numberToHex(i)).join(',');
                 const message: string = `Not all ${iden}opcodes were initialized (missing ${numbers.length})!\n Missing ${iden}opcodes: ${numberList}`;
-                console.warn(message);
+                DEBUG.WARN(message);
             }
         }
 
@@ -156,8 +158,8 @@ export class OpCodeRegistry {
 
         const funcList: ((b: Byte) => void)[] = [
             b => this.alu.add(b),
-            b => this.alu.adc(b),
             b => this.alu.sub(b),
+            b => this.alu.adc(b),
             b => this.alu.sbc(b),
             b => this.alu.and(b),
             b => this.alu.or(b),
@@ -174,7 +176,7 @@ export class OpCodeRegistry {
                     value = this.m.getWord(this.r.HL);
                 } else {
                     // @ts-ignore
-                    value = this[key];
+                    value = this.r[key];
                 }
                 funcList.forEach(((func: (b: Byte) => void, index: number) => {
                     const tuple: number[] = aluMap[key][index];
@@ -206,12 +208,12 @@ export class OpCodeRegistry {
 
     private initializeOpcodesLoad() {
         //LD nn,n
-        this.add(0x06, (d: Byte) => this.r.B = d, 8, 1);
-        this.add(0x0E, (d: Byte) => this.r.C = d, 8, 1);
-        this.add(0x16, (d: Byte) => this.r.D = d, 8, 1);
-        this.add(0x1E, (d: Byte) => this.r.E = d, 8, 1);
-        this.add(0x26, (d: Byte) => this.r.H = d, 8, 1);
-        this.add(0x2E, (d: Byte) => this.r.L = d, 8, 1);
+        this.add(0x06, (d: Byte) => this.r.B.copy(d), 8, 1);
+        this.add(0x0E, (d: Byte) => this.r.C.copy(d), 8, 1);
+        this.add(0x16, (d: Byte) => this.r.D.copy(d), 8, 1);
+        this.add(0x1E, (d: Byte) => this.r.E.copy(d), 8, 1);
+        this.add(0x26, (d: Byte) => this.r.H.copy(d), 8, 1);
+        this.add(0x2E, (d: Byte) => this.r.L.copy(d), 8, 1);
 
         const ldMap: {[key: number] : [Byte, Byte]} = {
             0x7F: [this.r.A, this.r.A], 0x78: [this.r.A, this.r.B], 0x79: [this.r.A, this.r.C], 0x7A: [this.r.A, this.r.D], 0x7B: [this.r.A, this.r.E], 0x7C: [this.r.A, this.r.H], 0x7D: [this.r.A, this.r.L],
@@ -229,13 +231,13 @@ export class OpCodeRegistry {
         });
 
         //LD r1,r2
-        this.add(0x7E, () => this.r.A = this.m.getWord(this.r.HL), 8);
-        this.add(0x46, () => this.r.B = this.m.getWord(this.r.HL), 8);
-        this.add(0x4E, () => this.r.C = this.m.getWord(this.r.HL), 8);
-        this.add(0x56, () => this.r.D = this.m.getWord(this.r.HL), 8);
-        this.add(0x5E, () => this.r.E = this.m.getWord(this.r.HL), 8);
-        this.add(0x66, () => this.r.H = this.m.getWord(this.r.HL), 8);
-        this.add(0x6E, () => this.r.L = this.m.getWord(this.r.HL), 8);
+        this.add(0x7E, () => this.r.A.copy(this.m.getWord(this.r.HL)), 8);
+        this.add(0x46, () => this.r.B.copy(this.m.getWord(this.r.HL)), 8);
+        this.add(0x4E, () => this.r.C.copy(this.m.getWord(this.r.HL)), 8);
+        this.add(0x56, () => this.r.D.copy(this.m.getWord(this.r.HL)), 8);
+        this.add(0x5E, () => this.r.E.copy(this.m.getWord(this.r.HL)), 8);
+        this.add(0x66, () => this.r.H.copy(this.m.getWord(this.r.HL)), 8);
+        this.add(0x6E, () => this.r.L.copy(this.m.getWord(this.r.HL)), 8);
 
         this.add(0x70, () => this.m.setWord(this.r.HL, this.r.B), 4);
         this.add(0x71, () => this.m.setWord(this.r.HL, this.r.C), 4);
@@ -246,37 +248,61 @@ export class OpCodeRegistry {
         this.add(0x36, (data: Byte) => this.m.setWord(this.r.HL, data), 8, 1);
 
         //LD A,n
-        this.add(0x0A, () => this.r.A = this.m.getWord(this.r.BC), 8);
-        this.add(0x1A, () => this.r.A = this.m.getWord(this.r.DE), 8);
-        this.add(0xFA, (data: DoubleByte) => this.r.A = this.m.getWord(data), 16, 2);
-        this.add(0x3E, (data: Byte) => this.r.A = data, 8);
+        this.add(0x0A, () => this.r.A.copy(this.m.getWord(this.r.BC)), 8);
+        this.add(0x1A, () => this.r.A.copy(this.m.getWord(this.r.DE)), 8);
+        this.add(0xFA, (data: DoubleByte) => this.r.A.copy(this.m.getWord(data)), 16, 2);
+        this.add(0x3E, (data: Byte) => this.r.A.copy(data), 8, 1);
 
         //LD n,A
         this.add(0x02, () => this.m.setWord(this.r.BC, this.r.A), 8);
         this.add(0x12, () => this.m.setWord(this.r.DE, this.r.A), 8);
+        this.add(0x77, () => this.m.setWord(this.r.HL, this.r.A), 8);
         this.add(0xEA, (data: DoubleByte) => this.m.setWord(data, this.r.A), 16, 2);
 
         //LD A,(C)
         // @ts-ignore
-        this.add(0xF2, () => this.r.A = this.m.getWord(DoubleByte.OF(0xFF00).add(this.r.C)), 8);
+        this.add(0xF2, () => {
+            const loc = DoubleByte.OF(0xFF00);
+            loc.add(this.r.C);
+            this.r.A.copy(this.m.getWord(loc))
+        }, 8);
         // @ts-ignore
-        this.add(0xE2, () => this.m.setWord(DoubleByte.OF(0xFF00).add(this.r.C), this.r.A), 8);
+        this.add(0xE2, () => {
+            const loc = DoubleByte.OF(0xFF00);
+            loc.add(this.r.C);
+            this.m.setWord(loc, this.r.A)
+        }, 8);
 
         //LDA,(HLD), LD A,(HL-), LDD A,(HL) and reverse
-        this.add(0x3A, () => { this.r.A = this.m.getWord(this.r.HL); this.r.HL.decrement(); }, 8);
+        this.add(0x3A, () => { this.r.A.copy(this.m.getWord(this.r.HL)); this.r.HL.decrement(); }, 8);
         this.add(0x32, () => { this.m.setWord(this.r.HL, this.r.A); this.r.HL.decrement(); }, 8);
 
         //LDA,(HLI), LD A,(HL+), LDD A,(HL) and reverse
-        this.add(0x2A, () => { this.r.A = this.m.getWord(this.r.HL); this.r.HL.increment(); }, 8);
+        this.add(0x2A, () => { this.r.A.copy(this.m.getWord(this.r.HL)); this.r.HL.increment(); }, 8);
         this.add(0x22, () => { this.m.setWord(this.r.HL, this.r.A); this.r.HL.increment(); }, 8);
         //LDH (n),A
-        /*this.add(0xE0, (data: Byte) => this.r.A = this.m.getWord(DoubleByte.OF(0xFF00).this.add(data)), 12);
-        this.add(0xF0, (data: Byte) => this.m.setWord(DoubleByte.OF(0xFF00).this.add(data), this.r.A), 12);*/
+        this.add(0xE0, (data: Byte) => {
+            const loc = DoubleByte.OF(0xFF00);
+            loc.add(data);
+            this.m.setWord(loc, this.r.A);
+        }, 12, 1);
+        this.add(0xF0, (data: Byte) => {
+            const loc = DoubleByte.OF(0xFF00);
+            loc.add(data);
+            this.r.A.copy(this.m.getWord(loc));
+        }, 12, 1);
+
+        //LDH (C),A
+        this.add(0xE3, () => {
+            const loc = DoubleByte.OF(0xFF00);
+            loc.add(this.r.C);
+            this.r.A.copy(this.m.getWord(loc));
+            }, 12);
 
         //LD n,nn
-        this.add(0x01, (data: DoubleByte) => this.r.BC = data, 12, 2);
-        this.add(0x11, (data: DoubleByte) => this.r.DE = data, 12, 2);
-        this.add(0x21, (data: DoubleByte) => this.r.HL = data, 12, 2);
+        this.add(0x01, (data: DoubleByte) => this.r.BC.copy(data), 12, 2);
+        this.add(0x11, (data: DoubleByte) => this.r.DE.copy(data), 12, 2);
+        this.add(0x21, (data: DoubleByte) => this.r.HL.copy(data), 12, 2);
         this.add(0x31, (data: DoubleByte) => this.stack.setPointer(data), 12, 2);
 
         //LD SP,HL
@@ -316,5 +342,33 @@ export class OpCodeRegistry {
             this.addExt(setOffset + row*8 + 6, () => SET(this.m.getWord(this.r.HL), row)(), 8);
             this.addExt(resOffset + row*8 + 6, () => RES(this.m.getWord(this.r.HL), row)(), 8);
         });
+    }
+
+    private initializeOpcodesJump() {
+        const wrapNZ = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (!this.r.FZ.isSet()) { func(d); }}
+        const wrapZ = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (this.r.FZ.isSet()) { func(d); }}
+        const wrapNC = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (!this.r.FC.isSet()) { func(d); }}
+        const wrapC = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (this.r.FC.isSet()) { func(d); }}
+
+        //JUMP NZ, Z, NC, C
+        const jump = (d: Byte) => this.r.PC.add(d);
+        this.add(0x20, (d: Byte) => wrapNZ(d, jump), 8, 1);
+        this.add(0x28, (d: Byte) => wrapZ(d, jump), 8, 1);
+        this.add(0x30, (d: Byte) => wrapNC(d, jump), 8, 1);
+        this.add(0x38, (d: Byte) => wrapC(d, jump), 8, 1);
+
+        //CALL nn
+        const call = (d: DoubleByte) => {
+            this.r.PC.increment();
+            this.stack.pushDouble(this.r.PC);
+            this.r.PC.copy(d);
+        };
+        this.add(0xCD, call, 12, 2);
+
+        //CALL cc,nn
+        this.add(0xC4, (d: DoubleByte) => wrapNZ(d, call), 12, 2);
+        this.add(0xCC, (d: DoubleByte) => wrapZ(d, call), 12, 2);
+        this.add(0xD4, (d: DoubleByte) => wrapNC(d, call), 12, 2);
+        this.add(0xDC, (d: DoubleByte) => wrapC(d, call), 12, 2);
     }
 }

@@ -43,23 +43,28 @@ export class Memory {
     }
 
     public setWord(pointer: DoubleByte, value: Byte) {
-        this.INTERNAL_DATA[pointer.toNumber()] = value;
+        this.INTERNAL_DATA[pointer.toNumber()].copy(value);
         this.observers[pointer.toNumber()].forEach(observer => observer(pointer, value));
     }
 
     public setDoubleWord(pointer: DoubleByte, value: DoubleByte) {
-        this.INTERNAL_DATA[pointer.toNumber()] = value.hi;
-        this.INTERNAL_DATA[pointer.toNumber() + 1] = value.lo;
+        this.INTERNAL_DATA[pointer.toNumber()].copy(value.hi)
+        this.INTERNAL_DATA[pointer.toNumber() + 1].copy(value.lo);
     }
 
     public attachObserverToLocation(location: DoubleByte, callback: (location: DoubleByte, data: Byte) => void) {
         this.observers[location.toNumber()].push(callback);
     }
 
-    public attachObserverToRegion(region: DoubleByte[], callback: (location: DoubleByte, data: Byte) => void){
+    public attachObserverToRegion(region: DoubleByte[], callback: (location: DoubleByte, data: Byte) => void) {
         region.forEach((loc: DoubleByte) => {
             this.attachObserverToLocation(loc, callback);
         })
+    }
+
+    public setRegion(start: DoubleByte, data: Byte[]) {
+        //modifies start byte
+        data.forEach(o => {this.setWord(start, o); start.increment(); } )
     }
 
 }

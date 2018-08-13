@@ -27,9 +27,9 @@ export class RegisterRegistry {
     public F: Byte = new Byte([this.FZ, this.FN, this.FC, this.FH, new Bit(0), new Bit(0), new Bit(0), new Bit(0)]);
     public AF: DoubleByte = new DoubleByte(this.A, this.F);
 
-    public PC: DoubleByte = DoubleByte.OF(0x0100);
+    public PC: DoubleByte = DoubleByte.OF(0x0000);
 
-    constructor(){
+    constructor() {
 
     }
 }

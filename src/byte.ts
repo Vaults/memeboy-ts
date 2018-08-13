@@ -29,7 +29,7 @@ export class Byte {
     }
 
     public add(byte: Byte) {
-        const newNumber = this.safeOverflow(trueModulo(this.toNumber() + byte.toNumber(), 256));
+        const newNumber = this.safeOverflow(this.toNumber() + byte.toNumber());
         this.setByNumber(newNumber);
     }
 
@@ -59,7 +59,7 @@ export class Byte {
         this.copy(swapped);
     }
 
-    public rotate(shift: number){
+    public rotate(shift: number) {
         const bitMask = (2 ** 8) - 1;
         const rot = shift & 7;
         const num: number = this.toNumber();
@@ -67,7 +67,7 @@ export class Byte {
         this.setByNumber(rotated);
     }
 
-    private safeOverflow(n: number): number{
+    private safeOverflow(n: number): number {
         return trueModulo(n, 256);
     }
 
@@ -75,5 +75,21 @@ export class Byte {
         if (byte < 0 || byte > 255) {throw new Error(`Byte ${byte} out of bounds!`); }
         const binary = padZero(byte.toString(2), 8).split('').map(i => parseInt(i, 2));
         binary.map((bit, index) => this.INTERNAL_DATA[index].copy(new Bit(bit)));
+    }
+
+    public sub(b: Byte): void {
+        this.setByNumber(this.safeOverflow(this.toNumber() - b.toNumber()));
+    }
+
+    public and(b: Byte): void {
+        this.setByNumber(this.toNumber() & b.toNumber());
+    }
+
+    public or(b: Byte): void {
+        this.setByNumber(this.toNumber() | b.toNumber());
+    }
+
+    public xor(b: Byte): void {
+        this.setByNumber(this.toNumber() ^ b.toNumber());
     }
 }

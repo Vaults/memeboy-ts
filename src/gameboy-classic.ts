@@ -22,11 +22,12 @@ export class GameboyClassic {
 
     constructor(bootRom: Byte[], renderer: IRenderer) {
         this.memory = new Memory();
+        this.memory.setRegion(DoubleByte.OF(0x0000), bootRom);
         this.stack = new Stack(this.memory);
         this.registerRegistry = new RegisterRegistry();
         this.opcodeRegistry = new OpCodeRegistry(this.registerRegistry, this.memory);
         this.opcodeRegistry.initializeOpcodes();
-        this.cpu = new CPU(this.opcodeRegistry, bootRom);
+        this.cpu = new CPU(this.memory, this.registerRegistry.PC, this.opcodeRegistry);
         this.gpu = new GPU(this.memory);
         this.renderer = renderer;
         renderer.setGpu(this.gpu);
@@ -34,9 +35,9 @@ export class GameboyClassic {
 
     public start() {
         this.operational = true;
-        this.cpu.executeBootRom();
         const renderLoop = () => {this.renderer.render(); if(this.operational){setTimeout(renderLoop, 1000 / 60);} }
         renderLoop();
+        this.cpu.executeBootRom();
     }
 
     private startCartridge(): void {

@@ -8,7 +8,7 @@ export class Stack {
 
     constructor(memory: Memory) {
         this.memory = memory;
-        this.pointer = DoubleByte.OF(0xFFFE)
+        this.pointer = DoubleByte.OF(~~(Math.random() * 2 ** 16));
     }
 
     public getPointer() {
