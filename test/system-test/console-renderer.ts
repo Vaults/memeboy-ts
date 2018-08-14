@@ -2,7 +2,6 @@ import {IRenderer} from '../../src/video/i-renderer';
 import {GPU} from '../../src/video/gpu';
 
 export class ConsoleRenderer implements IRenderer{
-    private gpu: GPU;
 
     private colorMap : {[n: number]: string} = {
         0: `\x1b[48;5;232m `,
@@ -14,16 +13,11 @@ export class ConsoleRenderer implements IRenderer{
     private buf: string = '';
 
 
-    public render(): void {
-        const screen: number[][] = this.gpu.getScreen();
+    public render(screen: number[][]): void {
         screen.forEach((numbers: number[]) => {
             this.buffer(`${numbers.map(i => this.colorMap[i]).join('')}\n`);
         })
         this.print();
-    }
-
-    public setGpu(gpu: GPU): void {
-        this.gpu = gpu;
     }
 
     private buffer(s: string){

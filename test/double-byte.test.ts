@@ -3,7 +3,7 @@ import {range} from '../src/lib/util';
 import {Byte} from '../src/byte';
 import {Bit} from '../src/bit';
 
-const TEST_ARRAY = range(0, 2 ** 16).filter(i => Math.random() < 0.01);
+const TEST_ARRAY = range(0, 2 ** 16).filter(i => Math.random() < 0.1);
 
 function forEachByte(func: (i: number) => void) {
     TEST_ARRAY.forEach(func);
@@ -76,7 +76,7 @@ describe('increment/decrement', () => {
 
     it('time for SUPER overflow', () => {
         forEachByte(i => {
-            if (Math.random() < 0.01) {
+            if (Math.random() < 0.1) {
                 const b: DoubleByte = DoubleByte.OF(i);
                 b.increment();
                 while (b.toNumber() !== i) {

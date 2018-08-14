@@ -5,6 +5,10 @@ export class Bit {
         this.setState(value);
     }
 
+    public static RANDOM(){
+        return new Bit(Math.round(Math.random()));
+    }
+
     public val(): number {
         return this.on ? 1 : 0;
     }

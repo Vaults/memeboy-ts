@@ -27,14 +27,15 @@
 
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
-import {range} from './lib/util';
+import {numberToHex, range} from './lib/util';
+import {DEBUG} from './lib/debug';
 
 export class Memory {
     private INTERNAL_DATA: Byte[] = [];
     private observers: {[location: number]: ((location: DoubleByte, data: Byte) => void)[]}
 
     constructor() {
-        this.INTERNAL_DATA = range(0, 2 ** 16).map(() => Byte.OF(~~(Math.random() * 256)));
+        this.INTERNAL_DATA = range(0, 2 ** 16).map(() => Byte.RANDOM());
         this.observers = range(0, 2 ** 16).map(() => []);
     }
 
@@ -43,7 +44,9 @@ export class Memory {
     }
 
     public setWord(pointer: DoubleByte, value: Byte) {
+        DEBUG.INFO(numberToHex(pointer.toNumber()));
         this.INTERNAL_DATA[pointer.toNumber()].copy(value);
+        DEBUG.INFO(numberToHex(this.INTERNAL_DATA[pointer.toNumber()].toNumber()))
         this.observers[pointer.toNumber()].forEach(observer => observer(pointer, value));
     }
 

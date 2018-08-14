@@ -4,6 +4,8 @@ export class DoubleByte {
     public hi: Byte;
     public lo: Byte;
 
+    private CACHED_NUMBER: number;
+
     constructor(hi: Byte, lo: Byte) {
         this.hi = hi;
         this.lo = lo;
@@ -31,6 +33,10 @@ export class DoubleByte {
         this.lo.add(byte);
     }
 
+    public addSigned(d: Byte) {
+        this.lo.addSigned(d);
+    }
+
     public decrement(): void {
         this.lo.decrement();
         if (this.lo.toNumber() === 255) {
@@ -51,5 +57,6 @@ export class DoubleByte {
         this.lo.copy(Byte.OF(lo));
         this.hi.copy(Byte.OF(hi));
     }
+
 
 }

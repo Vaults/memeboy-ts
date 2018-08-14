@@ -4,6 +4,7 @@ import {range} from '../lib/util';
 import {Byte} from '../byte';
 import {TileSet} from './tile-set';
 import {TileMap} from './tile-map';
+import {IRenderer} from './i-renderer';
 
 export class GPU {
     private memory: Memory;
@@ -29,19 +30,30 @@ export class GPU {
 
     private mapZero: TileMap;
     private mapOne: TileMap;
+    private renderer: IRenderer;
 
-    constructor(memory: Memory) {
+    constructor(memory: Memory, renderer: IRenderer) {
         this.memory = memory;
+        this.renderer = renderer;
+
         range(0, 128 * 3).forEach(i => {
             const tileSet = new TileSet(this.region( i * 16 + 0x8000, (i + 1) * 16 + 0x8000));
-            this.memory.attachObserverToRegion(tileSet.getRegion(), () => tileSet.update(this.memory));
+            this.memory.attachObserverToRegion(tileSet.getRegion(), () => {
+                tileSet.update(this.memory);
+                this.updateScreen();
+            });
+            tileSet.update(memory);
             this.tileSets.push(tileSet);
         });
 
         this.mapZero = new TileMap(this.tileSets.slice(0, 256), this.region(0x9800, 0x9C00));
         this.memory.attachObserverToRegion(this.mapZero.getRegion(), () => this.mapZero.update(memory));
+        this.mapZero.update(memory);
         this.mapOne = new TileMap(this.tileSets.slice(128, 128 * 3), this.region(0x9C00, 0xA000));
         this.memory.attachObserverToRegion(this.mapOne.getRegion(), () => this.mapOne.update(memory));
+        this.mapOne.update(memory);
+
+        this.updateScreen();
     }
 
 
@@ -49,12 +61,12 @@ export class GPU {
         return range(a, b).map(i => DoubleByte.OF(i));
     }
 
-    public getScreen(): number[][] {
-        this.tileSets.forEach(o => o.update(this.memory));
-        this.mapZero.update(this.memory);
-        //TODO map change and stuff
-        this.pixelMap = this.mapZero.getColors();
-        //TODO Hblank, Vblank, all that jazz
-        return this.pixelMap.slice(this.offsetX, this.offsetX + 160).map(o => o.slice(this.offsetY, this.offsetY + 144));
+    public updateScreen(){
+        const newMap = this.mapZero.getColors().slice(this.offsetX, this.offsetX + 160).map(o => o.slice(this.offsetY, this.offsetY + 144));
+        if (JSON.stringify(newMap) !== JSON.stringify(this.pixelMap)){
+            this.pixelMap = newMap;
+            this.renderer.render(this.pixelMap);
+        }
     }
+
 }

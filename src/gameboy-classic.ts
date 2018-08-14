@@ -27,16 +27,13 @@ export class GameboyClassic {
         this.registerRegistry = new RegisterRegistry();
         this.opcodeRegistry = new OpCodeRegistry(this.registerRegistry, this.memory);
         this.opcodeRegistry.initializeOpcodes();
-        this.cpu = new CPU(this.memory, this.registerRegistry.PC, this.opcodeRegistry);
-        this.gpu = new GPU(this.memory);
+        this.cpu = new CPU(this.memory, this.registerRegistry.PC, this.opcodeRegistry, this.registerRegistry);
+        this.gpu = new GPU(this.memory, renderer);
         this.renderer = renderer;
-        renderer.setGpu(this.gpu);
     }
 
     public start() {
         this.operational = true;
-        const renderLoop = () => {this.renderer.render(); if(this.operational){setTimeout(renderLoop, 1000 / 60);} }
-        renderLoop();
         this.cpu.executeBootRom();
     }
 

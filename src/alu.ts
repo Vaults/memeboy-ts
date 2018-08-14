@@ -10,13 +10,27 @@ export class ALU {
     }
 
     public add(b: Byte): void {
+        this.checkHalfCarry(b);
+        this.checkCarry(b);
         this.registerRegistry.A.add(b);
+        if (this.registerRegistry.A.toNumber() === 0){
+            this.registerRegistry.FZ.setState(0);
+        }
         this.registerRegistry.FN.setState(0);
     }
 
     public adc(b: Byte): void {
+        const copy: Byte = new Byte();
+        copy.copy(b);
+        copy.add(Byte.OF(this.registerRegistry.FC.val()));
+
+        this.checkHalfCarry(b);
+        this.checkCarry(b);
         this.registerRegistry.A.add(b);
-        this.registerRegistry.A.add(Byte.OF(this.registerRegistry.FC.val()));
+        if (this.registerRegistry.A.toNumber() === 0){
+            this.registerRegistry.FZ.setState(0);
+        }
+        this.registerRegistry.FN.setState(0);
     }
 
     public sub(b: Byte): void {
@@ -34,6 +48,13 @@ export class ALU {
     }
     public xor(b: Byte): void {
         this.registerRegistry.A.xor(b);
+        if (this.registerRegistry.A.toNumber() === 0){
+            this.registerRegistry.FZ.setState(0);
+        }
+        this.registerRegistry.FN.setState(0);
+        this.registerRegistry.FH.setState(0);
+        this.registerRegistry.FC.setState(0);
+
     }
     public cp(b: Byte): void {
         //TODO
@@ -47,11 +68,16 @@ export class ALU {
 
     private checkHalfCarry(b: Byte) {
         const A = this.registerRegistry.A;
-
+        if (((A.toNumber() & 0xF) + (b.toNumber() & 0xF) & 0x10) === 0x10){
+            this.registerRegistry.FH.setState(1);
+        }
     }
 
     private checkCarry(b: Byte){
-
+        const A = this.registerRegistry.A;
+        if (((A.toNumber() & 0xFF) + (b.toNumber() & 0xFF) & 0x100) === 0x100) {
+            this.registerRegistry.FH.setState(1);
+        }
     }
 
 }
