@@ -40,13 +40,17 @@ export class Memory {
     }
 
     public getWord(pointer: DoubleByte) {
-        return this.INTERNAL_DATA[pointer.toNumber()];
+        //GPU RETURN HACK
+        if(pointer.toNumber() === 0xFF44){
+            return Byte.OF(0x90);
+        }
+        const copy: Byte = new Byte();
+        copy.copy(this.INTERNAL_DATA[pointer.toNumber()]);
+        return copy;
     }
 
     public setWord(pointer: DoubleByte, value: Byte) {
-        DEBUG.INFO(numberToHex(pointer.toNumber()));
         this.INTERNAL_DATA[pointer.toNumber()].copy(value);
-        DEBUG.INFO(numberToHex(this.INTERNAL_DATA[pointer.toNumber()].toNumber()))
         this.observers[pointer.toNumber()].forEach(observer => observer(pointer, value));
     }
 
@@ -67,7 +71,10 @@ export class Memory {
 
     public setRegion(start: DoubleByte, data: Byte[]) {
         //modifies start byte
-        data.forEach(o => {this.setWord(start, o); start.increment(); } )
+        data.forEach(o => {
+            this.setWord(start, o);
+            start.increment();
+        })
     }
 
 }

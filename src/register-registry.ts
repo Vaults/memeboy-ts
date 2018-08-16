@@ -4,16 +4,16 @@ import {Bit} from './bit';
 
 export class RegisterRegistry {
     //Usually for data transferring
-    public B: Byte = Byte.RANDOM();
-    public C: Byte = Byte.RANDOM();
+    public B: Byte = Byte.OF(0);
+    public C: Byte = Byte.OF(0);
     public BC: DoubleByte = new DoubleByte(this.B, this.C);
     //Regular registers
-    public D: Byte = Byte.RANDOM();
-    public E: Byte = Byte.RANDOM();
+    public D: Byte = Byte.OF(0);
+    public E: Byte = Byte.OF(0);
     public DE: DoubleByte = new DoubleByte(this.D, this.E);
     //Indirect addressing
-    public H: Byte = Byte.RANDOM();
-    public L: Byte = Byte.RANDOM();
+    public H: Byte = Byte.OF(0);
+    public L: Byte = Byte.OF(0);
     public HL: DoubleByte = new DoubleByte(this.H, this.L);
 
     //Accumulator
@@ -31,5 +31,9 @@ export class RegisterRegistry {
 
     constructor() {
 
+    }
+
+    public checkZero(b: Byte){
+        this.FZ.setState(b.toNumber() === 0 ? 1 : 0);
     }
 }

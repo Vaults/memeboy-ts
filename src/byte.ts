@@ -83,7 +83,7 @@ export class Byte {
 
     public rotate(shift: number) {
         const bitMask = (2 ** 8) - 1;
-        const rot = shift & 7;
+        const rot = trueModulo(shift, 8) & 7;
         const num: number = this.toNumber();
         const rotated : number = ((num >>> rot) | (num << (8 - rot))) & bitMask;
         this.setByNumber(rotated);

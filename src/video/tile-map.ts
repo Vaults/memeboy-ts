@@ -32,9 +32,9 @@ export class TileMap {
 
     public getColors(): number[][] {
         const tileList: number[][][] = this.locs.map(i => this.sets[i].getColors());
-        return range(0, 8)
-            .map(i => tileList.slice(i * 8, (i + 1) * 8))
-            .map(tileSetRow => tileSetRow.reduce((acc, tileSet) => acc.map((o, i) => o.concat(tileSet[i])) , [[], [], [], [], [], [], [], []]))
+        return range(0, 32)
+            .map(i => tileList.slice(i * 32, (i + 1) * 32))
+            .map(tileSetRow => tileSetRow.reduce((acc, tileSet) => acc.map((row, index) => row.concat(tileSet[index])), range(0, 8).map(_ => [])))
             .reduce((p, n) => p.concat(n));
     }
 }

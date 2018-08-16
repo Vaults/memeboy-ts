@@ -7,6 +7,8 @@ import {RegisterRegistry} from './register-registry';
 import {OpCodeRegistry} from './opcodes/op-code-registry';
 import {IRenderer} from './video/i-renderer';
 import {GPU} from './video/gpu';
+import {DEBUG} from './lib/debug';
+import {numberToHex} from './lib/util';
 
 export class GameboyClassic {
 
@@ -20,9 +22,10 @@ export class GameboyClassic {
     private opcodeRegistry: OpCodeRegistry;
     private renderer: IRenderer;
 
-    constructor(bootRom: Byte[], renderer: IRenderer) {
+    constructor(bootRom: Byte[], cartridge: Byte[], renderer: IRenderer) {
         this.memory = new Memory();
         this.memory.setRegion(DoubleByte.OF(0x0000), bootRom);
+        this.memory.setRegion(DoubleByte.OF(0x0100), cartridge.slice(0x100, 0x3FFF));
         this.stack = new Stack(this.memory);
         this.registerRegistry = new RegisterRegistry();
         this.opcodeRegistry = new OpCodeRegistry(this.registerRegistry, this.memory);

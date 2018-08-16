@@ -30,7 +30,8 @@ export class TileSet {
                 combined.push(parseInt(top.getBit(i).val() + '' + bottom.getBit(i).val(), 2));
             })
 
-            this.internalColors.push(combined);
+            this.internalColors.unshift(combined);
+
         }
     }
 

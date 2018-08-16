@@ -1,6 +1,8 @@
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
 import {Memory} from './memory';
+import {DEBUG} from './lib/debug';
+import {numberToHex} from './lib/util';
 
 export class Stack {
     private memory: Memory;
@@ -19,23 +21,23 @@ export class Stack {
         this.pointer = data;
     }
 
-    public increment(){
+    public increment() {
         this.pointer.increment();
     }
 
-    public decrement(){
+    public decrement() {
         this.pointer.decrement();
     }
 
     //No types on runtime :(
     public popDouble(): DoubleByte {
-        return new DoubleByte(this.popSingle(), this.popSingle());
+        const lo = this.popSingle();
+        return new DoubleByte(this.popSingle(), lo);
     }
 
     public popSingle(): Byte {
-        const popped: Byte = this.memory.getWord(this.pointer);
         this.increment();
-        return popped;
+        return this.memory.getWord(this.pointer);
     }
 
     public pushDouble(data: DoubleByte): void {

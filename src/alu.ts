@@ -1,8 +1,11 @@
 import {Bit} from './bit';
 import {Byte} from './byte';
 import {RegisterRegistry} from './register-registry';
+import {DEBUG} from './lib/debug';
+import {numberToHex} from './lib/util';
 
 export class ALU {
+    //TODO: CHECK ALL FLAGS
     private registerRegistry: RegisterRegistry;
 
     constructor(registerRegistry: RegisterRegistry) {
@@ -13,9 +16,7 @@ export class ALU {
         this.checkHalfCarry(b);
         this.checkCarry(b);
         this.registerRegistry.A.add(b);
-        if (this.registerRegistry.A.toNumber() === 0){
-            this.registerRegistry.FZ.setState(0);
-        }
+        this.registerRegistry.checkZero(this.registerRegistry.A);
         this.registerRegistry.FN.setState(0);
     }
 
@@ -27,14 +28,14 @@ export class ALU {
         this.checkHalfCarry(b);
         this.checkCarry(b);
         this.registerRegistry.A.add(b);
-        if (this.registerRegistry.A.toNumber() === 0){
-            this.registerRegistry.FZ.setState(0);
-        }
+        this.registerRegistry.checkZero(this.registerRegistry.A);
         this.registerRegistry.FN.setState(0);
     }
 
     public sub(b: Byte): void {
         this.registerRegistry.A.sub(b);
+        this.registerRegistry.checkZero(this.registerRegistry.A);
+        this.registerRegistry.FN.setState(0);
     }
     public sbc(b: Byte): void {
         this.registerRegistry.A.sub(b);
@@ -48,22 +49,37 @@ export class ALU {
     }
     public xor(b: Byte): void {
         this.registerRegistry.A.xor(b);
-        if (this.registerRegistry.A.toNumber() === 0){
-            this.registerRegistry.FZ.setState(0);
-        }
+        this.registerRegistry.checkZero(this.registerRegistry.A);
         this.registerRegistry.FN.setState(0);
         this.registerRegistry.FH.setState(0);
         this.registerRegistry.FC.setState(0);
 
     }
     public cp(b: Byte): void {
-        //TODO
+        const copy: Byte = Byte.OF(0xFF);
+        copy.copy(this.registerRegistry.A);
+        copy.sub(b);
+        this.registerRegistry.checkZero(copy);
+
+        this.registerRegistry.FN.setState(1);
+        this.registerRegistry.FH.setState(0);
+        this.registerRegistry.FC.setState(0);
     }
     public inc(b: Byte): void {
-        this.registerRegistry.A.increment();
+        b.decrement();
+        this.registerRegistry.checkZero(b);
+        this.registerRegistry.FN.setState(1);
+        //TODO
+        this.registerRegistry.FH.setState(0);
+        this.registerRegistry.FC.setState(0);
     }
     public dec(b: Byte): void {
-        this.registerRegistry.A.decrement();
+        b.decrement();
+        this.registerRegistry.checkZero(b);
+        this.registerRegistry.FN.setState(1);
+        //TODO
+        this.registerRegistry.FH.setState(0);
+        this.registerRegistry.FC.setState(0);
     }
 
     private checkHalfCarry(b: Byte) {

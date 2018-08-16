@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import {Byte} from '../../src/byte';
+import {numberToHex} from '../../src/lib/util';
+import {BinaryStringParser} from '../../src/lib/binary-string-parser';
 
 export class NodeFileReader {
 
@@ -8,9 +10,13 @@ export class NodeFileReader {
     constructor() { }
 
     public getBootRom(callback: (bytes: Byte[]) => void ) {
-        fs.readFile(NodeFileReader.BOOT_ROM_LOCATION, (err, data) => {
+        this.getRom(NodeFileReader.BOOT_ROM_LOCATION, callback);
+    }
+
+    public getRom(path: string, callback: (bytes: Byte[]) => void ) {
+        fs.readFile(path, (err, data) => {
             if (err) {throw err; }
-            const bytes = data.toString('hex').match(/.{1,2}/g).map(i => parseInt(i, 16)).map(i => Byte.OF(i));
+            const bytes = BinaryStringParser.parse(data);
             callback(bytes);
         })
     }

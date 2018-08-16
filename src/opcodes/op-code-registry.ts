@@ -105,7 +105,6 @@ export class OpCodeRegistry {
         //STOP
         this.add(0x10, () => {/* TODO */}, 4);
 
-
         //DI
         this.add(0xF3, () => {/* TODO */}, 4);
 
@@ -129,7 +128,6 @@ export class OpCodeRegistry {
                 const numbers = range(0, 256).filter(i => opCodes[i] === undefined);
                 const numberList = numbers.map(i => numberToHex(i)).join(',');
                 const message: string = `Not all ${iden}opcodes were initialized (missing ${numbers.length})!\n Missing ${iden}opcodes: ${numberList}`;
-                DEBUG.WARN(message);
             }
         }
 
@@ -148,7 +146,7 @@ export class OpCodeRegistry {
             H: [[0x84, 4], [0x8C, 4], [0x94, 4], [0x9C, 4], [0xA4, 4], [0xB4, 4], [0xAC, 4], [0xBC, 4], [0x24, 4], [0x25, 4]],
             L: [[0x85, 4], [0x8D, 4], [0x95, 4], [0x9D, 4], [0xA5, 4], [0xB5, 4], [0xAD, 4], [0xBD, 4], [0x2C, 4], [0x2D, 4]],
             _HL: [[0x86, 4], [0x8E, 4], [0x96, 4], [0x9E, 4], [0xA6, 4], [0xB6, 4], [0xAE, 4], [0xBE, 4], [0x34, 4], [0x35, 4]],
-            _NUM: [[0xC6, 4], [0xCE, 4], [0xD6, 4], null, [0xE6, 4], [0xB6, 4], [0xEE, 4], [0xFE, 4], null, null]
+            _NUM: [[0xC6, 4], [0xCE, 4], [0xD6, 4], null, [0xE6, 4], [0xF6, 4], [0xEE, 4], [0xFE, 4], null, null]
         };
 
         const funcList: ((b: Byte) => void)[] = [
@@ -165,20 +163,27 @@ export class OpCodeRegistry {
         ];
 
         Object.keys(aluMap).forEach((key: string) => {
-            let value: Byte;
             if (key !== '_NUM') {
-                if (key === '_HL') {
-                    value = this.m.getWord(this.r.HL);
-                } else {
-                    // @ts-ignore
-                    value = this.r[key];
-                }
                 funcList.forEach(((func: (b: Byte) => void, index: number) => {
                     const tuple: number[] = aluMap[key][index];
-                    this.add(tuple[0], () => func(value), tuple[1]);
+                    this.add(tuple[0], () => {
+                        let value: Byte;
+                        if (key === '_HL') {
+                            value = this.m.getWord(this.r.HL);
+                        } else {
+                            // @ts-ignore
+                            value = this.r[key];
+                        }
+                        func(value);
+                    }, tuple[1]);
                 }));
             } else {
-                //TODO
+                funcList.forEach(((func: (b: Byte) => void, index: number) => {
+                    const tuple: number[] = aluMap[key][index];
+                    if(tuple !== null) {
+                        this.add(tuple[0], (b: Byte) => func(b), tuple[1], 1);
+                    }
+                }));
             }
         });
     }
@@ -212,12 +217,12 @@ export class OpCodeRegistry {
 
         const ldMap: {[key: number] : [Byte, Byte]} = {
             0x7F: [this.r.A, this.r.A], 0x78: [this.r.A, this.r.B], 0x79: [this.r.A, this.r.C], 0x7A: [this.r.A, this.r.D], 0x7B: [this.r.A, this.r.E], 0x7C: [this.r.A, this.r.H], 0x7D: [this.r.A, this.r.L],
-            0x40: [this.r.B, this.r.B], 0x41: [this.r.B, this.r.C], 0x42: [this.r.B, this.r.D], 0x43: [this.r.B, this.r.E], 0x44: [this.r.B, this.r.H], 0x45: [this.r.B, this.r.L],
-            0x48: [this.r.C, this.r.B], 0x49: [this.r.C, this.r.C], 0x4A: [this.r.C, this.r.D], 0x4B: [this.r.C, this.r.E], 0x4C: [this.r.C, this.r.H], 0x4D: [this.r.C, this.r.L],
-            0x50: [this.r.D, this.r.B], 0x51: [this.r.D, this.r.C], 0x52: [this.r.D, this.r.D], 0x53: [this.r.D, this.r.E], 0x54: [this.r.D, this.r.H], 0x55: [this.r.D, this.r.L],
-            0x58: [this.r.E, this.r.B], 0x59: [this.r.E, this.r.C], 0x5A: [this.r.E, this.r.D], 0x5B: [this.r.E, this.r.E], 0x5C: [this.r.E, this.r.H], 0x5D: [this.r.E, this.r.L],
-            0x60: [this.r.H, this.r.B], 0x61: [this.r.H, this.r.C], 0x62: [this.r.H, this.r.D], 0x63: [this.r.H, this.r.E], 0x64: [this.r.H, this.r.H], 0x65: [this.r.H, this.r.L],
-            0x68: [this.r.L, this.r.B], 0x69: [this.r.L, this.r.L], 0x6A: [this.r.L, this.r.D], 0x6B: [this.r.L, this.r.E], 0x6C: [this.r.L, this.r.H], 0x6D: [this.r.L, this.r.L],
+            0x40: [this.r.B, this.r.B], 0x41: [this.r.B, this.r.C], 0x42: [this.r.B, this.r.D], 0x43: [this.r.B, this.r.E], 0x44: [this.r.B, this.r.H], 0x45: [this.r.B, this.r.L], 0x47: [this.r.B, this.r.A],
+            0x48: [this.r.C, this.r.B], 0x49: [this.r.C, this.r.C], 0x4A: [this.r.C, this.r.D], 0x4B: [this.r.C, this.r.E], 0x4C: [this.r.C, this.r.H], 0x4D: [this.r.C, this.r.L], 0x4F: [this.r.C, this.r.A],
+            0x50: [this.r.D, this.r.B], 0x51: [this.r.D, this.r.C], 0x52: [this.r.D, this.r.D], 0x53: [this.r.D, this.r.E], 0x54: [this.r.D, this.r.H], 0x55: [this.r.D, this.r.L], 0x57: [this.r.D, this.r.A],
+            0x58: [this.r.E, this.r.B], 0x59: [this.r.E, this.r.C], 0x5A: [this.r.E, this.r.D], 0x5B: [this.r.E, this.r.E], 0x5C: [this.r.E, this.r.H], 0x5D: [this.r.E, this.r.L], 0x5F: [this.r.E, this.r.A],
+            0x60: [this.r.H, this.r.B], 0x61: [this.r.H, this.r.C], 0x62: [this.r.H, this.r.D], 0x63: [this.r.H, this.r.E], 0x64: [this.r.H, this.r.H], 0x65: [this.r.H, this.r.L], 0x67: [this.r.H, this.r.A],
+            0x68: [this.r.L, this.r.B], 0x69: [this.r.L, this.r.L], 0x6A: [this.r.L, this.r.D], 0x6B: [this.r.L, this.r.E], 0x6C: [this.r.L, this.r.H], 0x6D: [this.r.L, this.r.L], 0x6F: [this.r.L, this.r.A],
         };
 
         Object.keys(ldMap).map(i => parseInt(i, 10)).forEach((key: number) => {
@@ -244,7 +249,9 @@ export class OpCodeRegistry {
 
         //LD A,n
         this.add(0x0A, () => this.r.A.copy(this.m.getWord(this.r.BC)), 8);
-        this.add(0x1A, () => this.r.A.copy(this.m.getWord(this.r.DE)), 8);
+        this.add(0x1A, () => {
+            this.r.A.copy(this.m.getWord(this.r.DE))
+        },8);
         this.add(0xFA, (data: DoubleByte) => this.r.A.copy(this.m.getWord(data)), 16, 2);
         this.add(0x3E, (data: Byte) => this.r.A.copy(data), 8, 1);
 
@@ -274,7 +281,10 @@ export class OpCodeRegistry {
 
         //LDA,(HLI), LD A,(HL+), LDD A,(HL) and reverse
         this.add(0x2A, () => { this.r.A.copy(this.m.getWord(this.r.HL)); this.r.HL.increment(); }, 8);
-        this.add(0x22, () => { this.m.setWord(this.r.HL, this.r.A); this.r.HL.increment(); }, 8);
+        this.add(0x22, () => {
+            this.m.setWord(this.r.HL, this.r.A);
+            this.r.HL.increment(); },
+            8);
         //LDH (n),A
         this.add(0xE0, (data: Byte) => {
             const loc = DoubleByte.OF(0xFF00);
@@ -310,9 +320,12 @@ export class OpCodeRegistry {
         this.add(0x08, (data: DoubleByte) => this.stack.pushDouble(data), 20, 2);
     }
 
-    private initializeOpcodesExtended(){
+    private initializeOpcodesExtended() {
         const BIT = (byte: Byte, index: number) => () => {
-            if (byte.getBit(7 - index).val() === 0) {
+            //TODO neatify
+            if(byte.getBit(7- index).isSet()){
+                this.r.FZ.setState(0);
+            } else {
                 this.r.FZ.setState(1);
             }
             this.r.FN.setState(0);
@@ -320,13 +333,23 @@ export class OpCodeRegistry {
         };
         const SET = (byte: Byte, index: number) => () => byte.getBit(7 - index).setState(1);
         const RES = (byte: Byte, index: number) => () => byte.getBit(7 - index).setState(0);
-        const RL = (byte: Byte) => byte.rotate(-1);
-        const RR = (byte: Byte) => byte.rotate(-1);
-        const SWAP = (byte: Byte) => byte.swap();
-
-        const bitOffset: number = 0x40;
-        const setOffset: number = 0x80;
-        const resOffset: number = 0xC0;
+        const RL = (byte: Byte) => {
+            this.r.FC = byte.getBit(0);
+            byte.rotate(-1);
+            this.r.checkZero(byte);
+            this.r.FN.setState(0);
+            this.r.FH.setState(0);
+        }
+        const RR = (byte: Byte) => {
+            this.r.FC = byte.getBit(0);
+            byte.rotate(1);
+            this.r.checkZero(byte);
+            this.r.FN.setState(0);
+            this.r.FH.setState(0);
+        }
+        const SWAP = (byte: Byte) => {
+            byte.swap();
+        }
 
         const order: Byte[] = [this.r.B, this.r.C, this.r.D, this.r.E, this.r.H, this.r.L, null, this.r.A];
         range(0, 8).forEach(row => {
@@ -363,6 +386,7 @@ export class OpCodeRegistry {
 
         //JUMP NZ, Z, NC, C
         const jump = (d: Byte) => this.r.PC.addSigned(d);
+        this.add(0x18, jump, 8,  1);
         this.add(0x20, (d: Byte) => wrapNZ(d, jump), 8, 1);
         this.add(0x28, (d: Byte) => wrapZ(d, jump), 8, 1);
         this.add(0x30, (d: Byte) => wrapNC(d, jump), 8, 1);
@@ -373,6 +397,7 @@ export class OpCodeRegistry {
             this.r.PC.increment();
             this.stack.pushDouble(this.r.PC);
             this.r.PC.copy(d);
+            this.r.PC.decrement();
         };
         this.add(0xCD, call, 12, 2);
 
@@ -383,6 +408,10 @@ export class OpCodeRegistry {
         this.add(0xDC, (d: DoubleByte) => wrapC(d, call), 12, 2);
 
         //RET
-        this.add(0xC9, () => this.r.PC.copy(this.stack.popDouble()), 8);
+        this.add(0xC9, () => {
+            this.r.PC.copy(this.stack.popDouble());
+            this.r.PC.increment();
+            this.r.PC.increment();
+        }, 8);
     }
 }

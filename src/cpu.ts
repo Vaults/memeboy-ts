@@ -23,46 +23,40 @@ export class CPU {
     }
 
     public executeBootRom() {
-        while (this.getInstructionByte().toNumber() !== 0x50) {
-            let debugMessage = '';
+        let drmCounter = 0;
+        while (this.programCounter.toNumber() !== 0x00FE) {
+            if(this.programCounter.toNumber() === 0x00E9 || this.programCounter.toNumber() === 0x00FA) {
+                drmCounter++;
+                if(drmCounter > 100) {
+                    throw new Error('I am dead and I have died because the ROM is invalid :((((((((')
+                }
+            }
             const nextByte = this.getInstructionByte();
-            debugMessage += `opCode: ${numberToHex(nextByte.toNumber())}, pointer: ${numberToHex(this.programCounter.toNumber())}, `;
-            debugMessage += `flags: Z${this.registerRegistry.FZ.val()} C${this.registerRegistry.FC.val()} H${this.registerRegistry.FH.val()} N${this.registerRegistry.FN.val()}`
             if (nextByte.toNumber() !== CPU.EXTENDED_OPS) {
                 const opCode: OpCode = this.opCodeRegistry.getOpCode(nextByte);
-                debugMessage += `, ${opCode.logic.toString()}`;
                 if (opCode.dataBytes === 0) {
                     opCode.logic();
                 } else if (opCode.dataBytes === 1) {
                     this.programCounter.increment();
                     const data = this.getInstructionByte();
-                    debugMessage += `, data: ${numberToHex(data.toNumber())}`;
                     opCode.logic(data);
                 } else {
                     this.programCounter.increment();
                     const lo = this.getInstructionByte();
-                    debugMessage += `, lo: ${numberToHex(lo.toNumber())}`;
                     this.programCounter.increment();
                     const hi = this.getInstructionByte();
-                    debugMessage += `, hi: ${numberToHex(hi.toNumber())}`;
-
-
 
                     opCode.logic(new DoubleByte(hi, lo));
                 }
             } else {
                 this.programCounter.increment();
                 const extOpCodeByte = this.getInstructionByte();
-                debugMessage += `, ext: ${numberToHex(extOpCodeByte.toNumber())}`;
                 const extOpCode: OpCode = this.opCodeRegistry.getExtendedOpCode(extOpCodeByte);
-                debugMessage += `, ${extOpCode.logic.toString()}`;
                 extOpCode.logic();
             }
-            DEBUG.INFO(debugMessage);
             this.programCounter.increment();
         }
-        DEBUG.INFO(this.memory.getWord(DoubleByte.OF(0x80FF)).toNumber().toString());
-        DEBUG.INFO(this.memory.getWord(DoubleByte.OF(0x80EF)).toNumber().toString());
+
     }
 
     private getInstructionByte(): Byte {

@@ -4,10 +4,10 @@ import {GPU} from '../../src/video/gpu';
 export class ConsoleRenderer implements IRenderer{
 
     private colorMap : {[n: number]: string} = {
-        0: `\x1b[48;5;232m `,
-        1: '\x1b[48;5;248m ',
-        2: '\x1b[48;5;7m ',
-        3: '\x1b[48;5;255m '
+        0: `\x1b[48;5;118m `,
+        1: '\x1b[48;5;46m ',
+        2: '\x1b[48;5;40m ',
+        3: '\x1b[48;5;34m '
     }
 
     private buf: string = '';
@@ -25,7 +25,7 @@ export class ConsoleRenderer implements IRenderer{
     }
 
     private print() {
-        process.stdout.write(`\x1bc`)
+        process.stdout.write(`\x1Bc\x1B[0f`);
         process.stdout.write(this.buf);
         this.buf = '';
     }

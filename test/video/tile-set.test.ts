@@ -76,4 +76,23 @@ describe('simple static tests', () => {
 
         expect(tuple[0].getColors()).toEqual(expected);
     });
+
+    it('diag', () => {
+        const tuple = createEmptyTestCase();
+        tuple[1].setWord(DoubleByte.OF(0), Byte.OF(1));
+        tuple[0].update(tuple[1]);
+
+        const expected: number[][] = [
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+        ];
+
+        expect(tuple[0].getColors()).toEqual(expected);
+    });
 });

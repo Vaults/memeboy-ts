@@ -22,7 +22,7 @@
     "build": "tsc -p tsconfig.json",
     "watch": "tsc -w -p tsconfig.json",
     "start": "ts-node -D --skip-ignore test/system-test/gameboy-runner.ts",
-    "test": "jest --coverage --config jest.config.json"
+    "test": "jest --config jest.config.json"
   },
   "author": "Marcel Visser <Marcel1337@hotmail.com>",
   "license": "MIT",
