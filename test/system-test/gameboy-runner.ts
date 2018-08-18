@@ -15,6 +15,7 @@ nodeFileReader.getBootRom((bootRom: Byte[]) => {
         DEBUG.LEVEL = (debug) ? 'INFO' : 'OFF';
         const gb = new GameboyClassic(bootRom, cartridge, (debug) ? new NullRenderer() :  new ConsoleRenderer());
         gb.start();
+        //gb.run();
     })
 
 });

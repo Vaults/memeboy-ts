@@ -21,8 +21,10 @@ export class GameboyClassic {
     private registerRegistry: RegisterRegistry;
     private opcodeRegistry: OpCodeRegistry;
     private renderer: IRenderer;
+    private cartridge: Byte[];
 
     constructor(bootRom: Byte[], cartridge: Byte[], renderer: IRenderer) {
+        this.cartridge = cartridge;
         this.memory = new Memory();
         this.memory.setRegion(DoubleByte.OF(0x0000), bootRom);
         this.memory.setRegion(DoubleByte.OF(0x0100), cartridge.slice(0x100, 0x3FFF));
@@ -37,7 +39,12 @@ export class GameboyClassic {
 
     public start() {
         this.operational = true;
-        this.cpu.executeBootRom();
+        this.cpu.startGameboy();
+    }
+
+    public run(){
+        this.memory.setRegion(DoubleByte.OF(0x0000), this.cartridge.slice(0x0, 0x100));
+        this.cpu.run();
     }
 
     private startCartridge(): void {

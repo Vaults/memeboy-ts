@@ -83,7 +83,7 @@ describe('simple static tests', () => {
         tuple[0].update(tuple[1]);
 
         const expected: number[][] = [
-            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1],
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],

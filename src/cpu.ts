@@ -22,41 +22,47 @@ export class CPU {
         this.registerRegistry = registerRegistry;
     }
 
-    public executeBootRom() {
+    public startGameboy() {
         let drmCounter = 0;
         while (this.programCounter.toNumber() !== 0x00FE) {
-            if(this.programCounter.toNumber() === 0x00E9 || this.programCounter.toNumber() === 0x00FA) {
-                drmCounter++;
-                if(drmCounter > 100) {
-                    throw new Error('I am dead and I have died because the ROM is invalid :((((((((')
-                }
-            }
-            const nextByte = this.getInstructionByte();
-            if (nextByte.toNumber() !== CPU.EXTENDED_OPS) {
-                const opCode: OpCode = this.opCodeRegistry.getOpCode(nextByte);
-                if (opCode.dataBytes === 0) {
-                    opCode.logic();
-                } else if (opCode.dataBytes === 1) {
-                    this.programCounter.increment();
-                    const data = this.getInstructionByte();
-                    opCode.logic(data);
-                } else {
-                    this.programCounter.increment();
-                    const lo = this.getInstructionByte();
-                    this.programCounter.increment();
-                    const hi = this.getInstructionByte();
+            this.runInstruction();
+        }
+    }
 
-                    opCode.logic(new DoubleByte(hi, lo));
-                }
+    public run() {
+        let instructionCounter = 0;
+        while (instructionCounter < 100) {
+            this.runInstruction();
+            instructionCounter++;
+        }
+        setInterval(() => this.run(), 100);
+    }
+
+    private runInstruction() {
+        const nextByte = this.getInstructionByte();
+        if (nextByte.toNumber() !== CPU.EXTENDED_OPS) {
+            const opCode: OpCode = this.opCodeRegistry.getOpCode(nextByte);
+            if (opCode.dataBytes === 0) {
+                opCode.logic();
+            } else if (opCode.dataBytes === 1) {
+                this.programCounter.increment();
+                const data = this.getInstructionByte();
+                opCode.logic(data);
             } else {
                 this.programCounter.increment();
-                const extOpCodeByte = this.getInstructionByte();
-                const extOpCode: OpCode = this.opCodeRegistry.getExtendedOpCode(extOpCodeByte);
-                extOpCode.logic();
-            }
-            this.programCounter.increment();
-        }
+                const lo = this.getInstructionByte();
+                this.programCounter.increment();
+                const hi = this.getInstructionByte();
 
+                opCode.logic(new DoubleByte(hi, lo));
+            }
+        } else {
+            this.programCounter.increment();
+            const extOpCodeByte = this.getInstructionByte();
+            const extOpCode: OpCode = this.opCodeRegistry.getExtendedOpCode(extOpCodeByte);
+            extOpCode.logic();
+        }
+        this.programCounter.increment();
     }
 
     private getInstructionByte(): Byte {
@@ -78,6 +84,7 @@ export class CPU {
     private enableInterrupts() {
 
     }
+
 
 
 }

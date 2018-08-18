@@ -7,6 +7,7 @@ import {Memory} from '../memory';
 import {RegisterRegistry} from '../register-registry';
 import {Stack} from '../stack';
 import {OpCode} from './op-code';
+import {Bit} from '../bit';
 
 export class OpCodeRegistry {
     public opCodes: {[key: number] : OpCode} = {};
@@ -45,9 +46,6 @@ export class OpCodeRegistry {
         this.initializeOpcodesAlu();
         this.initializeOpcodesJump();
         this.initializeOpcodesExtended();
-
-        //??
-        this.add(0x17, () => this.r.A.rotate(-1), 8);
 
         //PUSH nn
         this.add(0xF5, () => this.stack.pushDouble(new DoubleByte(this.r.A, this.r.F)), 16);
@@ -249,9 +247,7 @@ export class OpCodeRegistry {
 
         //LD A,n
         this.add(0x0A, () => this.r.A.copy(this.m.getWord(this.r.BC)), 8);
-        this.add(0x1A, () => {
-            this.r.A.copy(this.m.getWord(this.r.DE))
-        },8);
+        this.add(0x1A, () => this.r.A.copy(this.m.getWord(this.r.DE)), 8);
         this.add(0xFA, (data: DoubleByte) => this.r.A.copy(this.m.getWord(data)), 16, 2);
         this.add(0x3E, (data: Byte) => this.r.A.copy(data), 8, 1);
 
@@ -281,10 +277,7 @@ export class OpCodeRegistry {
 
         //LDA,(HLI), LD A,(HL+), LDD A,(HL) and reverse
         this.add(0x2A, () => { this.r.A.copy(this.m.getWord(this.r.HL)); this.r.HL.increment(); }, 8);
-        this.add(0x22, () => {
-            this.m.setWord(this.r.HL, this.r.A);
-            this.r.HL.increment(); },
-            8);
+        this.add(0x22, () => { this.m.setWord(this.r.HL, this.r.A); this.r.HL.increment(); }, 8);
         //LDH (n),A
         this.add(0xE0, (data: Byte) => {
             const loc = DoubleByte.OF(0xFF00);
@@ -334,15 +327,31 @@ export class OpCodeRegistry {
         const SET = (byte: Byte, index: number) => () => byte.getBit(7 - index).setState(1);
         const RES = (byte: Byte, index: number) => () => byte.getBit(7 - index).setState(0);
         const RL = (byte: Byte) => {
-            this.r.FC = byte.getBit(0);
+            const temp: Bit = Bit.RANDOM();
+            temp.copy(this.r.FC);
+
+            this.r.FC.copy(byte.getBit(0));
             byte.rotate(-1);
+            byte.getBit(7).copy(temp);
+            //TODO: fix hack (bit updates do not trigger byte)
+            byte.flip();
+            byte.flip();
+
             this.r.checkZero(byte);
             this.r.FN.setState(0);
             this.r.FH.setState(0);
         }
         const RR = (byte: Byte) => {
-            this.r.FC = byte.getBit(0);
+            const temp: Bit = Bit.RANDOM();
+            temp.copy(this.r.FC);
+
+            this.r.FC.copy(byte.getBit(7));
             byte.rotate(1);
+            byte.getBit(0).copy(temp);
+            //TODO: fix hack (bit updates do not trigger byte)
+            byte.flip();
+            byte.flip();
+
             this.r.checkZero(byte);
             this.r.FN.setState(0);
             this.r.FH.setState(0);
@@ -350,6 +359,17 @@ export class OpCodeRegistry {
         const SWAP = (byte: Byte) => {
             byte.swap();
         }
+
+        //RLA TODO move
+        this.add(0x17, () => {
+            RL(this.r.A);
+
+            this.r.FZ.setState(0);
+            this.r.FH.setState(0);
+            this.r.FN.setState(0);
+        }, 8);
+
+
 
         const order: Byte[] = [this.r.B, this.r.C, this.r.D, this.r.E, this.r.H, this.r.L, null, this.r.A];
         range(0, 8).forEach(row => {
@@ -410,8 +430,7 @@ export class OpCodeRegistry {
         //RET
         this.add(0xC9, () => {
             this.r.PC.copy(this.stack.popDouble());
-            this.r.PC.increment();
-            this.r.PC.increment();
+            this.r.PC.decrement();
         }, 8);
     }
 }

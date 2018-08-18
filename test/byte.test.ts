@@ -30,7 +30,7 @@ describe('constructor', () => {
 
 describe('getBit', () => {
     it('invalid bit index', () => {
-        expect(() => new Byte().getBit(-1)).toThrow();
+        expect(() => new Byte().getBit(0x$1)).toThrow();
         expect(() => new Byte().getBit(8)).toThrow();
     })
     it('valid bit index', () => {
@@ -146,6 +146,11 @@ describe('rotate', () => {
         const byte: Byte = Byte.OF(16);
         byte.rotate(-1);
         expect(byte.toNumber()).toBe(32);
+    });
+    it('simple test case 2', () => {
+        const byte: Byte = Byte.OF(48);
+        byte.rotate(-1);
+        expect(byte.toNumber()).toBe(96);
     });
     it('rotates around', () => {
         forEachByte(i => {

@@ -16,6 +16,7 @@
     "adjacent-overload-signatures": false,
     "no-string-literal": false,
     "insecure-random": false,
+    "no-increment-decrement": false,
     "trailing-comma": [
       false,
       {

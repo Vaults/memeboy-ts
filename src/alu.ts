@@ -62,24 +62,20 @@ export class ALU {
         this.registerRegistry.checkZero(copy);
 
         this.registerRegistry.FN.setState(1);
-        this.registerRegistry.FH.setState(0);
-        this.registerRegistry.FC.setState(0);
+        this.checkCarry(b);
+        this.checkHalfCarry(b)
     }
     public inc(b: Byte): void {
         b.decrement();
         this.registerRegistry.checkZero(b);
         this.registerRegistry.FN.setState(1);
-        //TODO
-        this.registerRegistry.FH.setState(0);
-        this.registerRegistry.FC.setState(0);
+        this.checkHalfCarry(b);
     }
     public dec(b: Byte): void {
         b.decrement();
         this.registerRegistry.checkZero(b);
         this.registerRegistry.FN.setState(1);
-        //TODO
-        this.registerRegistry.FH.setState(0);
-        this.registerRegistry.FC.setState(0);
+        this.checkHalfCarry(b);
     }
 
     private checkHalfCarry(b: Byte) {
