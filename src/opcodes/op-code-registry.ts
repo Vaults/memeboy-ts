@@ -19,7 +19,7 @@ export class OpCodeRegistry {
     private readonly stack: Stack;
     private readonly alu: ALU;
 
-    constructor(registerRegistry: RegisterRegistry, memory: Memory, opcodes: OpCodeSupplier[], extOpcodes: OpCodeSupplier[]){
+    constructor(registerRegistry: RegisterRegistry, memory: Memory, opcodes: OpCodeSupplier[], extOpcodes: OpCodeSupplier[]) {
         this.registerRegistry = registerRegistry;
         this.memory = memory;
         this.mergeSuppliers(opcodes, extOpcodes);
@@ -27,7 +27,6 @@ export class OpCodeRegistry {
 
 
     public checkInitializedOpcodes() {
-
         const checkInitialized = (opCodes: {[key: number] : OpCode}, iden: string) => {
             if (Object.keys(opCodes).length !== 255) {
                 const numbers = range(0, 256).filter(i => opCodes[i] === undefined);
@@ -73,7 +72,5 @@ export class OpCodeRegistry {
             }
             map[location] = tuple[1];
         });
-
     }
-
 }

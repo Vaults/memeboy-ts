@@ -1,6 +1,7 @@
 import {ALU} from './alu';
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
+import {DEBUG} from './lib/debug';
 import {Memory} from './memory';
 import {OpCode} from './opcodes/op-code';
 import {OpCodeRegistry} from './opcodes/op-code-registry';
@@ -27,9 +28,15 @@ export class CPU {
     }
 
     public startGameboy() {
+        const start = new Date();
+        let instructionCount = 0;
         while (this.programCounter.toNumber() !== 0x00FE) {
             this.runInstruction();
+            instructionCount++;
         }
+        const end = new Date();
+        const secsElapsed = (end.getTime() - start.getTime()) / 1000;
+        DEBUG.INFO(`${instructionCount / secsElapsed} OPERATIONS PER SECOND`);
     }
 
     public run() {

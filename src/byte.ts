@@ -61,10 +61,7 @@ export class Byte {
     }
 
     public copy(overrider: Byte) {
-        overrider.INTERNAL_DATA.forEach((b: Bit, i: number) => {
-            this.INTERNAL_DATA[i].copy(b);
-        });
-        this.updateCachedNumber();
+        this.setByNumber(overrider.toNumber())
     }
 
     public flip() {
