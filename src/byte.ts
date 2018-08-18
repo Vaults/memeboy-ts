@@ -1,5 +1,5 @@
 import {Bit} from './bit';
-import {padZero, trueModulo} from './lib/util';
+import {safeByteOverflow, trueModulo} from './lib/util';
 
 export class Byte {
     private INTERNAL_DATA: Bit[] = [0, 0, 0, 0, 0, 0, 0, 0].map((i: number) => new Bit(i));
@@ -43,21 +43,21 @@ export class Byte {
     }
 
     public add(byte: Byte) {
-        const newNumber = this.safeOverflow(this.toNumber() + byte.toNumber());
+        const newNumber = safeByteOverflow(this.toNumber() + byte.toNumber());
         this.setByNumber(newNumber);
     }
 
-    public addSigned(byte: Byte){
-        const newNumber = this.safeOverflow(this.toNumber() + byte.toSignedNumber());
+    public addSigned(byte: Byte) {
+        const newNumber = safeByteOverflow(this.toNumber() + byte.toSignedNumber());
         this.setByNumber(newNumber);
     }
 
     public decrement() : void {
-        this.setByNumber(this.safeOverflow(this.toNumber() - 1));
+        this.setByNumber(safeByteOverflow(this.toNumber() - 1));
     }
 
     public increment() : void {
-        this.setByNumber(this.safeOverflow(this.toNumber() + 1));
+        this.setByNumber(safeByteOverflow(this.toNumber() + 1));
     }
 
     public copy(overrider: Byte) {
@@ -89,9 +89,8 @@ export class Byte {
         this.setByNumber(rotated);
     }
 
-
     public sub(b: Byte): void {
-        this.setByNumber(this.safeOverflow(this.toNumber() - b.toNumber()));
+        this.setByNumber(safeByteOverflow(this.toNumber() - b.toNumber()));
     }
 
     public and(b: Byte): void {
@@ -104,10 +103,6 @@ export class Byte {
 
     public xor(b: Byte): void {
         this.setByNumber(this.toNumber() ^ b.toNumber());
-    }
-
-    private safeOverflow(n: number): number {
-        return trueModulo(n, 256);
     }
 
     private setByNumber(byte: number) {

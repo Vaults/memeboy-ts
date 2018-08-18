@@ -1,22 +1,22 @@
 import {ALU} from '../alu';
 import {Byte} from '../byte';
 import {DoubleByte} from '../double-byte';
-import {DEBUG} from '../lib/debug';
 import {numberToHex, range} from '../lib/util';
 import {Memory} from '../memory';
 import {RegisterRegistry} from '../register-registry';
 import {Stack} from '../stack';
 import {OpCode} from './op-code';
 import {Bit} from '../bit';
+import {DEBUG} from '../lib/debug';
 
 export class OpCodeRegistry {
-    public opCodes: {[key: number] : OpCode} = {};
-    public extendedOpCodes: {[key: number] : OpCode} = {};
+    public readonly opCodes: {[key: number] : OpCode} = {};
+    public readonly extendedOpCodes: {[key: number] : OpCode} = {};
 
-    private r: RegisterRegistry;
-    private m: Memory;
-    private stack: Stack;
-    private alu: ALU;
+    private readonly r: RegisterRegistry;
+    private readonly m: Memory;
+    private readonly stack: Stack;
+    private readonly alu: ALU;
 
     constructor(r: RegisterRegistry, m: Memory){
         this.r = r;
@@ -126,8 +126,9 @@ export class OpCodeRegistry {
                 const numbers = range(0, 256).filter(i => opCodes[i] === undefined);
                 const numberList = numbers.map(i => numberToHex(i)).join(',');
                 const message: string = `Not all ${iden}opcodes were initialized (missing ${numbers.length})!\n Missing ${iden}opcodes: ${numberList}`;
+                DEBUG.WARN(message);
             }
-        }
+        };
 
         checkInitialized(this.opCodes, '');
         checkInitialized(this.extendedOpCodes, 'extended');
@@ -340,7 +341,7 @@ export class OpCodeRegistry {
             this.r.checkZero(byte);
             this.r.FN.setState(0);
             this.r.FH.setState(0);
-        }
+        };
         const RR = (byte: Byte) => {
             const temp: Bit = Bit.RANDOM();
             temp.copy(this.r.FC);
@@ -355,10 +356,10 @@ export class OpCodeRegistry {
             this.r.checkZero(byte);
             this.r.FN.setState(0);
             this.r.FH.setState(0);
-        }
+        };
         const SWAP = (byte: Byte) => {
             byte.swap();
-        }
+        };
 
         //RLA TODO move
         this.add(0x17, () => {
@@ -399,10 +400,10 @@ export class OpCodeRegistry {
     }
 
     private initializeOpcodesJump() {
-        const wrapNZ = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (!this.r.FZ.isSet()) { func(d); }}
-        const wrapZ = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (this.r.FZ.isSet()) { func(d); }}
-        const wrapNC = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (!this.r.FC.isSet()) { func(d); }}
-        const wrapC = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (this.r.FC.isSet()) { func(d); }}
+        const wrapNZ = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (!this.r.FZ.isSet()) { func(d); }};
+        const wrapZ = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (this.r.FZ.isSet()) { func(d); }};
+        const wrapNC = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (!this.r.FC.isSet()) { func(d); }};
+        const wrapC = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (this.r.FC.isSet()) { func(d); }};
 
         //JUMP NZ, Z, NC, C
         const jump = (d: Byte) => this.r.PC.addSigned(d);

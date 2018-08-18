@@ -1,6 +1,6 @@
+import {Bit} from './bit';
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
-import {Bit} from './bit';
 
 export class RegisterRegistry {
     //Usually for data transferring
@@ -33,7 +33,7 @@ export class RegisterRegistry {
 
     }
 
-    public checkZero(b: Byte){
+    public checkZero(b: Byte) {
         this.FZ.setState(b.toNumber() === 0 ? 1 : 0);
     }
 }

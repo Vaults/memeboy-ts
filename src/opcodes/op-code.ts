@@ -6,7 +6,7 @@ export class OpCode {
     public cycles: number;
     public dataBytes: number;
 
-    constructor(logic: (data?: Byte | DoubleByte) => void, cycles: number, dataBytes: number = 0){
+    constructor(logic: (data?: Byte | DoubleByte) => void, cycles: number, dataBytes: number = 0) {
         this.logic = logic;
         this.cycles = cycles;
         this.dataBytes = dataBytes;

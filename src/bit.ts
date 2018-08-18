@@ -5,7 +5,7 @@ export class Bit {
         this.setState(value);
     }
 
-    public static RANDOM(){
+    public static RANDOM() {
         return new Bit(Math.round(Math.random()));
     }
 

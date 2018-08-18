@@ -17,6 +17,8 @@
     "no-string-literal": false,
     "insecure-random": false,
     "no-increment-decrement": false,
+    "no-unnecessary-class": false,
+    "align": false,
     "trailing-comma": [
       false,
       {

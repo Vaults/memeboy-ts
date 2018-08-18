@@ -1,8 +1,6 @@
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
 import {Memory} from './memory';
-import {DEBUG} from './lib/debug';
-import {numberToHex} from './lib/util';
 
 export class Stack {
     private memory: Memory;
@@ -11,10 +9,6 @@ export class Stack {
     constructor(memory: Memory) {
         this.memory = memory;
         this.pointer = DoubleByte.OF(~~(Math.random() * 2 ** 16));
-    }
-
-    public getPointer() {
-        return this.pointer;
     }
 
     public setPointer(data: DoubleByte) {

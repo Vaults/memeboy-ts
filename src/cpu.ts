@@ -1,19 +1,17 @@
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
-import {OpCodeRegistry} from './opcodes/op-code-registry';
-import {OpCode} from './opcodes/op-code';
 import {Memory} from './memory';
-import {numberToHex, range} from "./lib/util";
-import {DEBUG} from './lib/debug';
+import {OpCode} from './opcodes/op-code';
+import {OpCodeRegistry} from './opcodes/op-code-registry';
 import {RegisterRegistry} from './register-registry';
 
 export class CPU {
 
     private static readonly EXTENDED_OPS: number = 0xCB;
-    private opCodeRegistry: OpCodeRegistry;
-    private memory: Memory;
-    private programCounter: DoubleByte;
-    private registerRegistry: RegisterRegistry;
+    private readonly opCodeRegistry: OpCodeRegistry;
+    private readonly memory: Memory;
+    private readonly programCounter: DoubleByte;
+    private readonly registerRegistry: RegisterRegistry;
 
     constructor(memory: Memory, programCounter: DoubleByte, opCodeRegistry: OpCodeRegistry, registerRegistry: RegisterRegistry) {
         this.memory = memory;
@@ -23,7 +21,6 @@ export class CPU {
     }
 
     public startGameboy() {
-        let drmCounter = 0;
         while (this.programCounter.toNumber() !== 0x00FE) {
             this.runInstruction();
         }
@@ -84,7 +81,4 @@ export class CPU {
     private enableInterrupts() {
 
     }
-
-
-
 }

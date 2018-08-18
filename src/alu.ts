@@ -1,8 +1,5 @@
-import {Bit} from './bit';
 import {Byte} from './byte';
 import {RegisterRegistry} from './register-registry';
-import {DEBUG} from './lib/debug';
-import {numberToHex} from './lib/util';
 
 export class ALU {
     //TODO: CHECK ALL FLAGS
@@ -63,7 +60,7 @@ export class ALU {
 
         this.registerRegistry.FN.setState(1);
         this.checkCarry(b);
-        this.checkHalfCarry(b)
+        this.checkHalfCarry(b);
     }
     public inc(b: Byte): void {
         b.decrement();
@@ -80,12 +77,12 @@ export class ALU {
 
     private checkHalfCarry(b: Byte) {
         const A = this.registerRegistry.A;
-        if (((A.toNumber() & 0xF) + (b.toNumber() & 0xF) & 0x10) === 0x10){
+        if (((A.toNumber() & 0xF) + (b.toNumber() & 0xF) & 0x10) === 0x10) {
             this.registerRegistry.FH.setState(1);
         }
     }
 
-    private checkCarry(b: Byte){
+    private checkCarry(b: Byte) {
         const A = this.registerRegistry.A;
         if (((A.toNumber() & 0xFF) + (b.toNumber() & 0xFF) & 0x100) === 0x100) {
             this.registerRegistry.FH.setState(1);

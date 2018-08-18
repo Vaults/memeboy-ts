@@ -20,19 +20,18 @@
     8kB Video RAM
     --------------------------- 8000 --
     16kB switchable ROM bank |
-    --------------------------- 4000 |= 32kB Cartrigbe
+    --------------------------- 4000 |= 32kB Cartridge
     16kB ROM bank #0 |
     --------------------------- 0000
     */
 
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
-import {numberToHex, range} from './lib/util';
-import {DEBUG} from './lib/debug';
+import {range} from './lib/util';
 
 export class Memory {
-    private INTERNAL_DATA: Byte[] = [];
-    private observers: {[location: number]: ((location: DoubleByte, data: Byte) => void)[]}
+    private readonly INTERNAL_DATA: Byte[] = [];
+    private readonly observers: {[location: number]: ((location: DoubleByte, data: Byte) => void)[]};
 
     constructor() {
         this.INTERNAL_DATA = range(0, 2 ** 16).map(() => Byte.RANDOM());
@@ -40,8 +39,8 @@ export class Memory {
     }
 
     public getWord(pointer: DoubleByte) {
-        //GPU RETURN HACK
-        if(pointer.toNumber() === 0xFF44){
+        //TODO GPU RETURN HACK
+        if (pointer.toNumber() === 0xFF44) {
             return Byte.OF(0x90);
         }
         const copy: Byte = new Byte();
@@ -54,11 +53,6 @@ export class Memory {
         this.observers[pointer.toNumber()].forEach(observer => observer(pointer, value));
     }
 
-    public setDoubleWord(pointer: DoubleByte, value: DoubleByte) {
-        this.INTERNAL_DATA[pointer.toNumber()].copy(value.hi)
-        this.INTERNAL_DATA[pointer.toNumber() + 1].copy(value.lo);
-    }
-
     public attachObserverToLocation(location: DoubleByte, callback: (location: DoubleByte, data: Byte) => void) {
         this.observers[location.toNumber()].push(callback);
     }
@@ -66,7 +60,7 @@ export class Memory {
     public attachObserverToRegion(region: DoubleByte[], callback: (location: DoubleByte, data: Byte) => void) {
         region.forEach((loc: DoubleByte) => {
             this.attachObserverToLocation(loc, callback);
-        })
+        });
     }
 
     public setRegion(start: DoubleByte, data: Byte[]) {
@@ -74,7 +68,7 @@ export class Memory {
         data.forEach(o => {
             this.setWord(start, o);
             start.increment();
-        })
+        });
     }
 
 }

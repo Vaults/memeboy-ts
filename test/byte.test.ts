@@ -30,7 +30,7 @@ describe('constructor', () => {
 
 describe('getBit', () => {
     it('invalid bit index', () => {
-        expect(() => new Byte().getBit(0x$1)).toThrow();
+        expect(() => new Byte().getBit(-1)).toThrow();
         expect(() => new Byte().getBit(8)).toThrow();
     })
     it('valid bit index', () => {
