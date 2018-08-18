@@ -1,38 +1,36 @@
 import {ALU} from '../alu';
+import {Bit} from '../bit';
 import {Byte} from '../byte';
 import {DoubleByte} from '../double-byte';
+import {DEBUG} from '../lib/debug';
 import {numberToHex, range} from '../lib/util';
 import {Memory} from '../memory';
 import {RegisterRegistry} from '../register-registry';
 import {Stack} from '../stack';
-import {OpCode} from './op-code';
-import {Bit} from '../bit';
-import {DEBUG} from '../lib/debug';
+import {OpCode, OpCodeLogic} from './op-code';
 
 export class OpCodeRegistry {
     public readonly opCodes: {[key: number] : OpCode} = {};
     public readonly extendedOpCodes: {[key: number] : OpCode} = {};
 
-    private readonly r: RegisterRegistry;
-    private readonly m: Memory;
+    private readonly registerRegistry: RegisterRegistry;
+    private readonly memory: Memory;
     private readonly stack: Stack;
     private readonly alu: ALU;
 
-    constructor(r: RegisterRegistry, m: Memory){
-        this.r = r;
-        this.m = m;
-        this.stack = new Stack(m);
-        this.alu = new ALU(this.r);
+    constructor(registerRegistry: RegisterRegistry, memory: Memory){
+        this.registerRegistry = registerRegistry;
+        this.memory = memory;
     }
 
-    private add(byte: number, logic: (data?: Byte | DoubleByte) => void, cycles: number, dataBytes?: number){
+    private add(byte: number, logic: OpCodeLogic, cycles: number, dataBytes?: number){
         if (this.opCodes[byte] !== undefined) {
             throw new Error(`OPCODE NUMBER ${numberToHex(byte)} DEFINED TWICE!`);
         }
         this.opCodes[byte] = new OpCode(logic, cycles, dataBytes);
     }
 
-    private addExt(byte: number, logic: (data?: Byte | DoubleByte) => void, cycles: number, dataBytes?: number){
+    private addExt(byte: number, logic: OpCodeLogic, cycles: number, dataBytes?: number){
         if (this.extendedOpCodes[byte] !== undefined) {
             throw new Error(`EXT OPCODE NUMBER ${numberToHex(byte)} DEFINED TWICE!`);
         }
@@ -48,77 +46,77 @@ export class OpCodeRegistry {
         this.initializeOpcodesExtended();
 
         //PUSH nn
-        this.add(0xF5, () => this.stack.pushDouble(new DoubleByte(this.r.A, this.r.F)), 16);
-        this.add(0xC5, () => this.stack.pushDouble(this.r.BC), 16);
-        this.add(0xD5, () => this.stack.pushDouble(this.r.DE), 16);
-        this.add(0xE5, () => this.stack.pushDouble(this.r.HL), 16);
+        this.add(0xF5, (r, m, s, a, d) => s.pushDouble(new DoubleByte(r.A, r.F)), 16);
+        this.add(0xC5, (r, m, s, a, d) => s.pushDouble(r.BC), 16);
+        this.add(0xD5, (r, m, s, a, d) => s.pushDouble(r.DE), 16);
+        this.add(0xE5, (r, m, s, a, d) => s.pushDouble(r.HL), 16);
 
         //POP nn
-        this.add(0xF1, () => this.r.AF.copy(this.stack.popDouble()), 12);
-        this.add(0xC1, () => this.r.BC.copy(this.stack.popDouble()), 12);
-        this.add(0xD1, () => this.r.DE.copy(this.stack.popDouble()), 12);
-        this.add(0xE1, () => this.r.HL.copy(this.stack.popDouble()), 12);
+        this.add(0xF1, (r, m, s, a, d) => r.AF.copy(s.popDouble()), 12);
+        this.add(0xC1, (r, m, s, a, d) => r.BC.copy(s.popDouble()), 12);
+        this.add(0xD1, (r, m, s, a, d) => r.DE.copy(s.popDouble()), 12);
+        this.add(0xE1, (r, m, s, a, d) => r.HL.copy(s.popDouble()), 12);
 
 
-        //this.add HL,n
-        this.add(0x09, () => { /* TODO */ }, 8);
-        this.add(0x19, () => { /* TODO */ }, 8);
-        this.add(0x29, () => { /* TODO */ }, 8);
-        this.add(0x39, () => { /* TODO */ }, 8);
+        //add HL,n
+        this.add(0x09, (r, m, s, a, d) => { /* TODO */ }, 8);
+        this.add(0x19, (r, m, s, a, d) => { /* TODO */ }, 8);
+        this.add(0x29, (r, m, s, a, d) => { /* TODO */ }, 8);
+        this.add(0x39, (r, m, s, a, d) => { /* TODO */ }, 8);
 
-        //this.add SP,n
-        this.add(0xE8, () => { /* TODO */ }, 16);
+        //add SP,n
+        this.add(0xE8, (r, m, s, a, d) => { /* TODO */ }, 16);
 
         //INC nn
-        this.add(0x03, () => this.r.BC.increment(), 8);
-        this.add(0x13, () => this.r.DE.increment(), 8);
-        this.add(0x23, () => this.r.HL.increment(), 8);
-        this.add(0x33, () => this.stack.increment(), 8);
+        this.add(0x03, (r, m, s, a, d) => r.BC.increment(), 8);
+        this.add(0x13, (r, m, s, a, d) => r.DE.increment(), 8);
+        this.add(0x23, (r, m, s, a, d) => r.HL.increment(), 8);
+        this.add(0x33, (r, m, s, a, d) => s.increment(), 8);
 
         //DEC nn
-        this.add(0x0B, () => this.r.BC.decrement(), 8);
-        this.add(0x1B, () => this.r.DE.decrement(), 8);
-        this.add(0x2B, () => this.r.HL.decrement(), 8);
-        this.add(0x3B, () => this.stack.decrement(), 8);
+        this.add(0x0B, (r, m, s, a, d) => r.BC.decrement(), 8);
+        this.add(0x1B, (r, m, s, a, d) => r.DE.decrement(), 8);
+        this.add(0x2B, (r, m, s, a, d) => r.HL.decrement(), 8);
+        this.add(0x3B, (r, m, s, a, d) => s.decrement(), 8);
 
 
         //DAA
-        this.add(0x27, () => {/* TODO */}, 4);
+        this.add(0x27, (r, m, s, a, d) => {/* TODO */}, 4);
 
         //CPL
-        this.add(0x2F, () => this.r.A.flip(), 4);
+        this.add(0x2F, (r, m, s, a, d) => r.A.flip(), 4);
 
         //CCF
-        this.add(0x3F, () => this.r.FC.flip(), 4);
+        this.add(0x3F, (r, m, s, a, d) => r.FC.flip(), 4);
 
         //SCF
-        this.add(0x37, () => this.r.FC.setState(0), 4);
+        this.add(0x37, (r, m, s, a, d) => r.FC.setState(0), 4);
 
         //NOP
         this.add(0x00, () => {}, 4);
 
         //HALT
-        this.add(0x76, () => {/* TODO */}, 4);
+        this.add(0x76, (r, m, s, a, d) => {/* TODO */}, 4);
 
         //STOP
-        this.add(0x10, () => {/* TODO */}, 4);
+        this.add(0x10, (r, m, s, a, d) => {/* TODO */}, 4);
 
         //DI
-        this.add(0xF3, () => {/* TODO */}, 4);
+        this.add(0xF3, (r, m, s, a, d) => {/* TODO */}, 4);
 
         //EI
-        this.add(0xFB, () => {/* TODO */}, 4);
+        this.add(0xFB, (r, m, s, a, d) => {/* TODO */}, 4);
 
         //RRCA
-        this.add(0x0F, () => {
-            this.r.FC.copy(this.r.A.getBit(0));
-            this.r.A.rotate(1);
+        this.add(0x0F, (r, m, s, a, d) => {
+            r.FC.copy(r.A.getBit(0));
+            r.A.rotate(1);
         }, 4);
 
         //RLCA
-        this.add(0x07, () => {
-            this.r.FC.copy(this.r.A.getBit(7));
-            this.r.A.rotate(-1);
+        this.add(0x07, (r, m, s, a, d) => {
+            r.FC.copy(r.A.getBit(7));
+            r.A.rotate(-1);
         }, 4);
 
         const checkInitialized = (opCodes: {[key: number] : OpCode}, iden: string) => {
@@ -148,46 +146,46 @@ export class OpCodeRegistry {
             _NUM: [[0xC6, 4], [0xCE, 4], [0xD6, 4], null, [0xE6, 4], [0xF6, 4], [0xEE, 4], [0xFE, 4], null, null]
         };
 
-        const funcList: ((b: Byte) => void)[] = [
-            b => this.alu.add(b),
-            b => this.alu.sub(b),
-            b => this.alu.adc(b),
-            b => this.alu.sbc(b),
-            b => this.alu.and(b),
-            b => this.alu.or(b),
-            b => this.alu.xor(b),
-            b => this.alu.cp(b),
-            b => this.alu.inc(b),
-            b => this.alu.dec(b),
+        const funcList: ((a: ALU, b: Byte) => void)[] = [
+            (a, b) => a.add(b),
+            (a, b) => a.sub(b),
+            (a, b) => a.adc(b),
+            (a, b) => a.sbc(b),
+            (a, b) => a.and(b),
+            (a, b) => a.or(b),
+            (a, b) => a.xor(b),
+            (a, b) => a.cp(b),
+            (a, b) => a.inc(b),
+            (a, b) => a.dec(b),
         ];
 
         Object.keys(aluMap).forEach((key: string) => {
             if (key !== '_NUM') {
-                funcList.forEach(((func: (b: Byte) => void, index: number) => {
+                funcList.forEach(((func: (a: ALU, b: Byte) => void, index: number) => {
                     const tuple: number[] = aluMap[key][index];
-                    this.add(tuple[0], () => {
+                    this.add(tuple[0], (r, m, s, a, d) => {
                         let value: Byte;
                         if (key === '_HL') {
-                            value = this.m.getWord(this.r.HL);
+                            value = m.getWord(r.HL);
                         } else {
                             // @ts-ignore
-                            value = this.r[key];
+                            value = r[key];
                         }
-                        func(value);
+                        func(a, value);
                     }, tuple[1]);
                 }));
             } else {
-                funcList.forEach(((func: (b: Byte) => void, index: number) => {
+                funcList.forEach(((func: (a: ALU, b: Byte) => void, index: number) => {
                     const tuple: number[] = aluMap[key][index];
-                    if(tuple !== null) {
-                        this.add(tuple[0], (b: Byte) => func(b), tuple[1], 1);
+                    if (tuple !== null) {
+                        this.add(tuple[0], (r, m, s, a, d: Byte) => func(a, d), tuple[1], 1);
                     }
                 }));
             }
         });
     }
 
-    public getOpCode(b: Byte){
+    public getOpCode(b: Byte) {
         const opCode: OpCode = this.opCodes[b.toNumber()];
         if (opCode) {
             return this.opCodes[b.toNumber()];
@@ -196,7 +194,7 @@ export class OpCodeRegistry {
         }
     }
 
-    public getExtendedOpCode(b: Byte){
+    public getExtendedOpCode(b: Byte) {
         const opCode: OpCode = this.extendedOpCodes[b.toNumber()];
         if (opCode) {
             return this.extendedOpCodes[b.toNumber()];
@@ -207,172 +205,182 @@ export class OpCodeRegistry {
 
     private initializeOpcodesLoad() {
         //LD nn,n
-        this.add(0x06, (d: Byte) => this.r.B.copy(d), 8, 1);
-        this.add(0x0E, (d: Byte) => this.r.C.copy(d), 8, 1);
-        this.add(0x16, (d: Byte) => this.r.D.copy(d), 8, 1);
-        this.add(0x1E, (d: Byte) => this.r.E.copy(d), 8, 1);
-        this.add(0x26, (d: Byte) => this.r.H.copy(d), 8, 1);
-        this.add(0x2E, (d: Byte) => this.r.L.copy(d), 8, 1);
+        this.add(0x06, (r, m, s, a, d: Byte) => r.B.copy(d), 8, 1);
+        this.add(0x0E, (r, m, s, a, d: Byte) => r.C.copy(d), 8, 1);
+        this.add(0x16, (r, m, s, a, d: Byte) => r.D.copy(d), 8, 1);
+        this.add(0x1E, (r, m, s, a, d: Byte) => r.E.copy(d), 8, 1);
+        this.add(0x26, (r, m, s, a, d: Byte) => r.H.copy(d), 8, 1);
+        this.add(0x2E, (r, m, s, a, d: Byte) => r.L.copy(d), 8, 1);
 
-        const ldMap: {[key: number] : [Byte, Byte]} = {
-            0x7F: [this.r.A, this.r.A], 0x78: [this.r.A, this.r.B], 0x79: [this.r.A, this.r.C], 0x7A: [this.r.A, this.r.D], 0x7B: [this.r.A, this.r.E], 0x7C: [this.r.A, this.r.H], 0x7D: [this.r.A, this.r.L],
-            0x40: [this.r.B, this.r.B], 0x41: [this.r.B, this.r.C], 0x42: [this.r.B, this.r.D], 0x43: [this.r.B, this.r.E], 0x44: [this.r.B, this.r.H], 0x45: [this.r.B, this.r.L], 0x47: [this.r.B, this.r.A],
-            0x48: [this.r.C, this.r.B], 0x49: [this.r.C, this.r.C], 0x4A: [this.r.C, this.r.D], 0x4B: [this.r.C, this.r.E], 0x4C: [this.r.C, this.r.H], 0x4D: [this.r.C, this.r.L], 0x4F: [this.r.C, this.r.A],
-            0x50: [this.r.D, this.r.B], 0x51: [this.r.D, this.r.C], 0x52: [this.r.D, this.r.D], 0x53: [this.r.D, this.r.E], 0x54: [this.r.D, this.r.H], 0x55: [this.r.D, this.r.L], 0x57: [this.r.D, this.r.A],
-            0x58: [this.r.E, this.r.B], 0x59: [this.r.E, this.r.C], 0x5A: [this.r.E, this.r.D], 0x5B: [this.r.E, this.r.E], 0x5C: [this.r.E, this.r.H], 0x5D: [this.r.E, this.r.L], 0x5F: [this.r.E, this.r.A],
-            0x60: [this.r.H, this.r.B], 0x61: [this.r.H, this.r.C], 0x62: [this.r.H, this.r.D], 0x63: [this.r.H, this.r.E], 0x64: [this.r.H, this.r.H], 0x65: [this.r.H, this.r.L], 0x67: [this.r.H, this.r.A],
-            0x68: [this.r.L, this.r.B], 0x69: [this.r.L, this.r.L], 0x6A: [this.r.L, this.r.D], 0x6B: [this.r.L, this.r.E], 0x6C: [this.r.L, this.r.H], 0x6D: [this.r.L, this.r.L], 0x6F: [this.r.L, this.r.A],
+        const ldMap: {[key: number] : [string, string]} = {
+            0x7F: ['A', 'A'], 0x78: ['A', 'B'], 0x79: ['A', 'C'], 0x7A: ['A', 'D'], 0x7B: ['A', 'E'], 0x7C: ['A', 'H'], 0x7D: ['A', 'L'],
+            0x40: ['B', 'B'], 0x41: ['B', 'C'], 0x42: ['B', 'D'], 0x43: ['B', 'E'], 0x44: ['B', 'H'], 0x45: ['B', 'L'], 0x47: ['B', 'A'],
+            0x48: ['C', 'B'], 0x49: ['C', 'C'], 0x4A: ['C', 'D'], 0x4B: ['C', 'E'], 0x4C: ['C', 'H'], 0x4D: ['C', 'L'], 0x4F: ['C', 'A'],
+            0x50: ['D', 'B'], 0x51: ['D', 'C'], 0x52: ['D', 'D'], 0x53: ['D', 'E'], 0x54: ['D', 'H'], 0x55: ['D', 'L'], 0x57: ['D', 'A'],
+            0x58: ['E', 'B'], 0x59: ['E', 'C'], 0x5A: ['E', 'D'], 0x5B: ['E', 'E'], 0x5C: ['E', 'H'], 0x5D: ['E', 'L'], 0x5F: ['E', 'A'],
+            0x60: ['H', 'B'], 0x61: ['H', 'C'], 0x62: ['H', 'D'], 0x63: ['H', 'E'], 0x64: ['H', 'H'], 0x65: ['H', 'L'], 0x67: ['H', 'A'],
+            0x68: ['L', 'B'], 0x69: ['L', 'L'], 0x6A: ['L', 'D'], 0x6B: ['L', 'E'], 0x6C: ['L', 'H'], 0x6D: ['L', 'L'], 0x6F: ['L', 'A'],
         };
 
         Object.keys(ldMap).map(i => parseInt(i, 10)).forEach((key: number) => {
-            const ldMapElement : [Byte, Byte] = ldMap[key];
-            this.add(key, () => ldMapElement[0].copy(ldMapElement[1]), 4);
+            const ldMapElement : [string, string] = ldMap[key];
+            // @ts-ignore Ignore index signature, this hack makes registry easier.
+            this.add(key, (r, m, s, a, d) => r[ldMapElement[0]].copy(r[ldMapElement[1]]), 4);
         });
 
         //LD r1,r2
-        this.add(0x7E, () => this.r.A.copy(this.m.getWord(this.r.HL)), 8);
-        this.add(0x46, () => this.r.B.copy(this.m.getWord(this.r.HL)), 8);
-        this.add(0x4E, () => this.r.C.copy(this.m.getWord(this.r.HL)), 8);
-        this.add(0x56, () => this.r.D.copy(this.m.getWord(this.r.HL)), 8);
-        this.add(0x5E, () => this.r.E.copy(this.m.getWord(this.r.HL)), 8);
-        this.add(0x66, () => this.r.H.copy(this.m.getWord(this.r.HL)), 8);
-        this.add(0x6E, () => this.r.L.copy(this.m.getWord(this.r.HL)), 8);
+        this.add(0x7E, (r, m, s, a, d) => r.A.copy(m.getWord(r.HL)), 8);
+        this.add(0x46, (r, m, s, a, d) => r.B.copy(m.getWord(r.HL)), 8);
+        this.add(0x4E, (r, m, s, a, d) => r.C.copy(m.getWord(r.HL)), 8);
+        this.add(0x56, (r, m, s, a, d) => r.D.copy(m.getWord(r.HL)), 8);
+        this.add(0x5E, (r, m, s, a, d) => r.E.copy(m.getWord(r.HL)), 8);
+        this.add(0x66, (r, m, s, a, d) => r.H.copy(m.getWord(r.HL)), 8);
+        this.add(0x6E, (r, m, s, a, d) => r.L.copy(m.getWord(r.HL)), 8);
 
-        this.add(0x70, () => this.m.setWord(this.r.HL, this.r.B), 4);
-        this.add(0x71, () => this.m.setWord(this.r.HL, this.r.C), 4);
-        this.add(0x72, () => this.m.setWord(this.r.HL, this.r.D), 4);
-        this.add(0x73, () => this.m.setWord(this.r.HL, this.r.E), 4);
-        this.add(0x74, () => this.m.setWord(this.r.HL, this.r.H), 4);
-        this.add(0x75, () => this.m.setWord(this.r.HL, this.r.L), 4);
-        this.add(0x36, (data: Byte) => this.m.setWord(this.r.HL, data), 8, 1);
+        this.add(0x70, (r, m, s, a, d) => m.setWord(r.HL, r.B), 4);
+        this.add(0x71, (r, m, s, a, d) => m.setWord(r.HL, r.C), 4);
+        this.add(0x72, (r, m, s, a, d) => m.setWord(r.HL, r.D), 4);
+        this.add(0x73, (r, m, s, a, d) => m.setWord(r.HL, r.E), 4);
+        this.add(0x74, (r, m, s, a, d) => m.setWord(r.HL, r.H), 4);
+        this.add(0x75, (r, m, s, a, d) => m.setWord(r.HL, r.L), 4);
+        this.add(0x36, (r, m, s, a, d: Byte) => m.setWord(r.HL, d), 8, 1);
 
         //LD A,n
-        this.add(0x0A, () => this.r.A.copy(this.m.getWord(this.r.BC)), 8);
-        this.add(0x1A, () => this.r.A.copy(this.m.getWord(this.r.DE)), 8);
-        this.add(0xFA, (data: DoubleByte) => this.r.A.copy(this.m.getWord(data)), 16, 2);
-        this.add(0x3E, (data: Byte) => this.r.A.copy(data), 8, 1);
+        this.add(0x0A, (r, m, s, a, d) => r.A.copy(m.getWord(r.BC)), 8);
+        this.add(0x1A, (r, m, s, a, d) => r.A.copy(m.getWord(r.DE)), 8);
+        this.add(0xFA, (r, m, s, a, d: DoubleByte) => r.A.copy(m.getWord(d )), 16, 2);
+        this.add(0x3E, (r, m, s, a, d: Byte) => r.A.copy(d ), 8, 1);
 
         //LD n,A
-        this.add(0x02, () => this.m.setWord(this.r.BC, this.r.A), 8);
-        this.add(0x12, () => this.m.setWord(this.r.DE, this.r.A), 8);
-        this.add(0x77, () => this.m.setWord(this.r.HL, this.r.A), 8);
-        this.add(0xEA, (data: DoubleByte) => this.m.setWord(data, this.r.A), 16, 2);
+        this.add(0x02, (r, m, s, a, d) => m.setWord(r.BC, r.A), 8);
+        this.add(0x12, (r, m, s, a, d) => m.setWord(r.DE, r.A), 8);
+        this.add(0x77, (r, m, s, a, d) => m.setWord(r.HL, r.A), 8);
+        this.add(0xEA, (r, m, s, a, d: DoubleByte) => m.setWord(d , r.A), 16, 2);
 
         //LD A,(C)
         // @ts-ignore
-        this.add(0xF2, () => {
+        this.add(0xF2, (r, m, s, a, d) => {
             const loc = DoubleByte.OF(0xFF00);
-            loc.add(this.r.C);
-            this.r.A.copy(this.m.getWord(loc))
+            loc.add(r.C);
+            r.A.copy(m.getWord(loc))
         }, 8);
         // @ts-ignore
-        this.add(0xE2, () => {
+        this.add(0xE2, (r, m, s, a, d) => {
             const loc = DoubleByte.OF(0xFF00);
-            loc.add(this.r.C);
-            this.m.setWord(loc, this.r.A)
+            loc.add(r.C);
+            m.setWord(loc, r.A)
         }, 8);
 
         //LDA,(HLD), LD A,(HL-), LDD A,(HL) and reverse
-        this.add(0x3A, () => { this.r.A.copy(this.m.getWord(this.r.HL)); this.r.HL.decrement(); }, 8);
-        this.add(0x32, () => { this.m.setWord(this.r.HL, this.r.A); this.r.HL.decrement(); }, 8);
+        this.add(0x3A, (r, m, s, a, d) => { r.A.copy(m.getWord(r.HL)); r.HL.decrement(); }, 8);
+        this.add(0x32, (r, m, s, a, d) => { m.setWord(r.HL, r.A); r.HL.decrement(); }, 8);
 
         //LDA,(HLI), LD A,(HL+), LDD A,(HL) and reverse
-        this.add(0x2A, () => { this.r.A.copy(this.m.getWord(this.r.HL)); this.r.HL.increment(); }, 8);
-        this.add(0x22, () => { this.m.setWord(this.r.HL, this.r.A); this.r.HL.increment(); }, 8);
+        this.add(0x2A, (r, m, s, a, d) => { r.A.copy(m.getWord(r.HL)); r.HL.increment(); }, 8);
+        this.add(0x22, (r, m, s, a, d) => { m.setWord(r.HL, r.A); r.HL.increment(); }, 8);
         //LDH (n),A
-        this.add(0xE0, (data: Byte) => {
+        this.add(0xE0, (r, m, s, a, d: Byte) => {
             const loc = DoubleByte.OF(0xFF00);
-            loc.add(data);
-            this.m.setWord(loc, this.r.A);
+            loc.add(d);
+            m.setWord(loc, r.A);
         }, 12, 1);
-        this.add(0xF0, (data: Byte) => {
+        this.add(0xF0, (r, m, s, a, d: Byte) => {
             const loc = DoubleByte.OF(0xFF00);
-            loc.add(data);
-            this.r.A.copy(this.m.getWord(loc));
+            loc.add(d);
+            r.A.copy(m.getWord(loc));
         }, 12, 1);
 
         //LDH (C),A
-        this.add(0xE3, () => {
+        this.add(0xE3, (r, m, s, a, d) => {
             const loc = DoubleByte.OF(0xFF00);
-            loc.add(this.r.C);
-            this.r.A.copy(this.m.getWord(loc));
+            loc.add(r.C);
+            r.A.copy(m.getWord(loc));
             }, 12);
 
         //LD n,nn
-        this.add(0x01, (data: DoubleByte) => this.r.BC.copy(data), 12, 2);
-        this.add(0x11, (data: DoubleByte) => this.r.DE.copy(data), 12, 2);
-        this.add(0x21, (data: DoubleByte) => this.r.HL.copy(data), 12, 2);
-        this.add(0x31, (data: DoubleByte) => this.stack.setPointer(data), 12, 2);
+        this.add(0x01, (r, m, s, a, d: DoubleByte) => r.BC.copy(d), 12, 2);
+        this.add(0x11, (r, m, s, a, d: DoubleByte) => r.DE.copy(d), 12, 2);
+        this.add(0x21, (r, m, s, a, d: DoubleByte) => r.HL.copy(d), 12, 2);
+        this.add(0x31, (r, m, s, a, d: DoubleByte) => s.setPointer(d), 12, 2);
 
         //LD SP,HL
-        this.add(0xF9, () => this.stack.setPointer(this.r.HL), 8);
+        this.add(0xF9, (r, m, s, a, d) => s.setPointer(r.HL), 8);
 
         //LD HL,SP+n
-        this.add(0xF8, () => {} /*TODO*/, 12);
+        this.add(0xF8, (r, m, s, a, d) => {} /*TODO*/, 12);
 
         //LD (nn),SP
-        this.add(0x08, (data: DoubleByte) => this.stack.pushDouble(data), 20, 2);
+        this.add(0x08, (r, m, s, a, d: DoubleByte) => s.pushDouble(d), 20, 2);
     }
 
     private initializeOpcodesExtended() {
-        const BIT = (byte: Byte, index: number) => () => {
+        const BIT: (d: Byte, index: number) => OpCodeLogic = (byte, index) => (r, m, s, a, d) => {
             //TODO neatify
-            if(byte.getBit(7- index).isSet()){
-                this.r.FZ.setState(0);
+            if (byte.getBit(7- index).isSet()) {
+                r.FZ.setState(0);
             } else {
-                this.r.FZ.setState(1);
+                r.FZ.setState(1);
             }
-            this.r.FN.setState(0);
-            this.r.FH.setState(1);
+            r.FN.setState(0);
+            r.FH.setState(1);
         };
-        const SET = (byte: Byte, index: number) => () => byte.getBit(7 - index).setState(1);
-        const RES = (byte: Byte, index: number) => () => byte.getBit(7 - index).setState(0);
-        const RL = (byte: Byte) => {
+        const SET: (d: Byte, index: number) => OpCodeLogic = (byte, index) => (r, m, s, a, d) => byte.getBit(7 - index).setState(1);
+        const RES: (d: Byte, index: number) => OpCodeLogic = (byte, index) => (r, m, s, a, d) => byte.getBit(7 - index).setState(0);
+        const RL: (d: Byte) => OpCodeLogic = (byte) => (r, m, s, a, d) => {
             const temp: Bit = Bit.RANDOM();
-            temp.copy(this.r.FC);
+            temp.copy(r.FC);
 
-            this.r.FC.copy(byte.getBit(0));
+            r.FC.copy(byte.getBit(0));
             byte.rotate(-1);
             byte.getBit(7).copy(temp);
             //TODO: fix hack (bit updates do not trigger byte)
             byte.flip();
             byte.flip();
 
-            this.r.checkZero(byte);
-            this.r.FN.setState(0);
-            this.r.FH.setState(0);
+            r.checkZero(byte);
+            r.FN.setState(0);
+            r.FH.setState(0);
         };
-        const RR = (byte: Byte) => {
+        const RR: (d: Byte) => OpCodeLogic = (byte) => (r, m, s, a, d) => {
             const temp: Bit = Bit.RANDOM();
-            temp.copy(this.r.FC);
+            temp.copy(r.FC);
 
-            this.r.FC.copy(byte.getBit(7));
+            r.FC.copy(byte.getBit(7));
             byte.rotate(1);
             byte.getBit(0).copy(temp);
             //TODO: fix hack (bit updates do not trigger byte)
             byte.flip();
             byte.flip();
 
-            this.r.checkZero(byte);
-            this.r.FN.setState(0);
-            this.r.FH.setState(0);
+            r.checkZero(byte);
+            r.FN.setState(0);
+            r.FH.setState(0);
         };
-        const SWAP = (byte: Byte) => {
+        const SWAP: (d: Byte) => OpCodeLogic = (byte) => (r, m, s, a, d) => {
             byte.swap();
         };
 
         //RLA TODO move
-        this.add(0x17, () => {
-            RL(this.r.A);
+        this.add(0x17, (r, m, s, a, d) => {
+            RL(r.A)(r,m,s,a,d);
 
-            this.r.FZ.setState(0);
-            this.r.FH.setState(0);
-            this.r.FN.setState(0);
+            r.FZ.setState(0);
+            r.FH.setState(0);
+            r.FN.setState(0);
         }, 8);
 
 
 
-        const order: Byte[] = [this.r.B, this.r.C, this.r.D, this.r.E, this.r.H, this.r.L, null, this.r.A];
+        const order: Byte[] = [
+            this.registerRegistry.B,
+            this.registerRegistry.C,
+            this.registerRegistry.D,
+            this.registerRegistry.E,
+            this.registerRegistry.H,
+            this.registerRegistry.L,
+            null,
+            this.registerRegistry.A
+        ];
         range(0, 8).forEach(row => {
             order.forEach((byte: Byte, col: number) => {
                 if (byte !== null) {
@@ -383,55 +391,55 @@ export class OpCodeRegistry {
             });
             if (order[row] !== null) {
                 const byte: Byte = order[row];
-                this.addExt(0x10 + row, () => RL(byte), 8);
-                this.addExt(0x20 + row, () => RR(byte), 8);
-                this.addExt(0x30 + row, () => SWAP(byte), 8);
+                this.addExt(0x10 + row, RL(byte), 8);
+                this.addExt(0x20 + row, RR(byte), 8);
+                this.addExt(0x30 + row, SWAP(byte), 8);
             }
 
-            this.addExt(0x40 + row * 8 + 6, () => BIT(this.m.getWord(this.r.HL), row)(), 8);
-            this.addExt(0x80 + row * 8 + 6, () => SET(this.m.getWord(this.r.HL), row)(), 8);
-            this.addExt(0xC0 + row * 8 + 6, () => RES(this.m.getWord(this.r.HL), row)(), 8);
+            this.addExt(0x40 + row * 8 + 6, (r, m, s, a, d) => BIT(m.getWord(r.HL), row)(r,m,s,a,d), 8);
+            this.addExt(0x80 + row * 8 + 6, (r, m, s, a, d) => BIT(m.getWord(r.HL), row)(r,m,s,a,d), 8);
+            this.addExt(0xC0 + row * 8 + 6, (r, m, s, a, d) => BIT(m.getWord(r.HL), row)(r,m,s,a,d), 8);
         });
 
-        this.addExt(0x16, () => RL(this.m.getWord(this.r.HL)), 8);
-        this.addExt(0x26, () => RR(this.m.getWord(this.r.HL)), 8);
-        this.addExt(0x36, () => SWAP(this.m.getWord(this.r.HL)), 8);
+        this.addExt(0x16, (r, m, s, a, d) => RL(m.getWord(r.HL))(r,m,s,a,d), 8);
+        this.addExt(0x26, (r, m, s, a, d) => RR(m.getWord(r.HL))(r,m,s,a,d), 8);
+        this.addExt(0x36, (r, m, s, a, d) => SWAP(m.getWord(r.HL))(r,m,s,a,d), 8);
 
     }
 
     private initializeOpcodesJump() {
-        const wrapNZ = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (!this.r.FZ.isSet()) { func(d); }};
-        const wrapZ = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (this.r.FZ.isSet()) { func(d); }};
-        const wrapNC = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (!this.r.FC.isSet()) { func(d); }};
-        const wrapC = (d: Byte| DoubleByte, func: (d: Byte | DoubleByte) => void) => { if (this.r.FC.isSet()) { func(d); }};
+        const wrapNZ: (logic: OpCodeLogic) => OpCodeLogic = (logic) => (r, m, s, a, d) => { if (!r.FZ.isSet()) { logic(r, m, s, a, d); }};
+        const wrapZ: (logic: OpCodeLogic) => OpCodeLogic = (logic) => (r, m, s, a, d) => { if (r.FZ.isSet()) { logic(r, m, s, a, d); }};
+        const wrapNC: (logic: OpCodeLogic) => OpCodeLogic = (logic) => (r, m, s, a, d) => { if (!r.FC.isSet()) { logic(r, m, s, a, d); }};
+        const wrapC: (logic: OpCodeLogic) => OpCodeLogic = (logic) => (r, m, s, a, d) => { if (r.FC.isSet()) { logic(r, m, s, a, d); }};
 
         //JUMP NZ, Z, NC, C
-        const jump = (d: Byte) => this.r.PC.addSigned(d);
+        const jump: OpCodeLogic = (r, m, s, a, d: Byte) => r.PC.addSigned(d);
         this.add(0x18, jump, 8,  1);
-        this.add(0x20, (d: Byte) => wrapNZ(d, jump), 8, 1);
-        this.add(0x28, (d: Byte) => wrapZ(d, jump), 8, 1);
-        this.add(0x30, (d: Byte) => wrapNC(d, jump), 8, 1);
-        this.add(0x38, (d: Byte) => wrapC(d, jump), 8, 1);
+        this.add(0x20, wrapNZ(jump), 8, 1);
+        this.add(0x28, wrapZ(jump), 8, 1);
+        this.add(0x30, wrapNC(jump), 8, 1);
+        this.add(0x38, wrapC(jump), 8, 1);
 
         //CALL nn
-        const call = (d: DoubleByte) => {
-            this.r.PC.increment();
-            this.stack.pushDouble(this.r.PC);
-            this.r.PC.copy(d);
-            this.r.PC.decrement();
+        const call : OpCodeLogic = (r, m, s, a, d: DoubleByte) => {
+            r.PC.increment();
+            s.pushDouble(r.PC);
+            r.PC.copy(d);
+            r.PC.decrement();
         };
         this.add(0xCD, call, 12, 2);
 
         //CALL cc,nn
-        this.add(0xC4, (d: DoubleByte) => wrapNZ(d, call), 12, 2);
-        this.add(0xCC, (d: DoubleByte) => wrapZ(d, call), 12, 2);
-        this.add(0xD4, (d: DoubleByte) => wrapNC(d, call), 12, 2);
-        this.add(0xDC, (d: DoubleByte) => wrapC(d, call), 12, 2);
+        this.add(0xC4, wrapNZ(jump), 12, 2);
+        this.add(0xCC, wrapZ(jump), 12, 2);
+        this.add(0xD4, wrapNC(jump), 12, 2);
+        this.add(0xDC, wrapNZ(jump), 12, 2);
 
         //RET
-        this.add(0xC9, () => {
-            this.r.PC.copy(this.stack.popDouble());
-            this.r.PC.decrement();
+        this.add(0xC9, (r, m, s, a, d) => {
+            r.PC.copy(s.popDouble());
+            r.PC.decrement();
         }, 8);
     }
 }

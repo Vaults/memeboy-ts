@@ -1,9 +1,11 @@
+import {ALU} from './alu';
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
 import {Memory} from './memory';
 import {OpCode} from './opcodes/op-code';
 import {OpCodeRegistry} from './opcodes/op-code-registry';
 import {RegisterRegistry} from './register-registry';
+import {Stack} from './stack';
 
 export class CPU {
 
@@ -12,12 +14,16 @@ export class CPU {
     private readonly memory: Memory;
     private readonly programCounter: DoubleByte;
     private readonly registerRegistry: RegisterRegistry;
+    private readonly stack: Stack;
+    private readonly alu: ALU;
 
     constructor(memory: Memory, programCounter: DoubleByte, opCodeRegistry: OpCodeRegistry, registerRegistry: RegisterRegistry) {
         this.memory = memory;
         this.opCodeRegistry = opCodeRegistry;
         this.programCounter = programCounter;
         this.registerRegistry = registerRegistry;
+        this.stack = new Stack(memory);
+        this.alu = new ALU(registerRegistry);
     }
 
     public startGameboy() {
@@ -40,24 +46,24 @@ export class CPU {
         if (nextByte.toNumber() !== CPU.EXTENDED_OPS) {
             const opCode: OpCode = this.opCodeRegistry.getOpCode(nextByte);
             if (opCode.dataBytes === 0) {
-                opCode.logic();
+                opCode.logic(this.registerRegistry, this.memory, this.stack, this.alu);
             } else if (opCode.dataBytes === 1) {
                 this.programCounter.increment();
                 const data = this.getInstructionByte();
-                opCode.logic(data);
+                opCode.logic(this.registerRegistry, this.memory, this.stack, this.alu, data);
             } else {
                 this.programCounter.increment();
                 const lo = this.getInstructionByte();
                 this.programCounter.increment();
                 const hi = this.getInstructionByte();
 
-                opCode.logic(new DoubleByte(hi, lo));
+                opCode.logic(this.registerRegistry, this.memory, this.stack, this.alu, new DoubleByte(hi, lo));
             }
         } else {
             this.programCounter.increment();
             const extOpCodeByte = this.getInstructionByte();
             const extOpCode: OpCode = this.opCodeRegistry.getExtendedOpCode(extOpCodeByte);
-            extOpCode.logic();
+            extOpCode.logic(this.registerRegistry, this.memory, this.stack, this.alu);
         }
         this.programCounter.increment();
     }
