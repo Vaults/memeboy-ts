@@ -1,4 +1,4 @@
-import {numberToHex, padZero, range, trueModulo} from '../../src/lib/util';
+import {asTupleList, numberToHex, padZero, range, trueModulo} from '../../src/lib/util';
 
 describe('padZero', () => {
     it('sanity checks', () => {
@@ -27,5 +27,21 @@ describe('mod', () => {
 describe('range', () => {
     it('sanity checks', () => {
         expect(range(0, 10)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    });
+});
+
+describe('asTupleList', () => {
+    it('sanity checks', () => {
+        const input: {[key: number] : string} = {
+            1: 'a',
+            2: 'b',
+            47: 'c'
+        };
+        const expected: [number, string][] = [
+            [1, 'a'],
+            [2, 'b'],
+            [47, 'c']
+        ]
+        expect(asTupleList(input)).toEqual(expected);
     });
 });

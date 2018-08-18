@@ -3,6 +3,11 @@ import {CPU} from './cpu';
 import {DoubleByte} from './double-byte';
 import {Memory} from './memory';
 import {OpCodeRegistry} from './opcodes/op-code-registry';
+import {AluOpCodeSupplier} from './opcodes/suppliers/alu-op-code-supplier';
+import {ExtendedOpCodeSupplier} from './opcodes/suppliers/extended-op-code-supplier';
+import {JumpOpCodeSupplier} from './opcodes/suppliers/jump-op-code-supplier';
+import {LoadOpCodeSupplier} from './opcodes/suppliers/load-op-code-supplier';
+import {MiscOpCodeSupplier} from './opcodes/suppliers/misc-op-code-supplier';
 import {RegisterRegistry} from './register-registry';
 import {Stack} from './stack';
 import {GPU} from './video/gpu';
@@ -28,8 +33,13 @@ export class GameboyClassic {
         this.memory.setRegion(DoubleByte.OF(0x0100), cartridge.slice(0x100, 0x3FFF));
         this.stack = new Stack(this.memory);
         this.registerRegistry = new RegisterRegistry();
-        this.opcodeRegistry = new OpCodeRegistry(this.registerRegistry, this.memory);
-        this.opcodeRegistry.initializeOpcodes();
+        this.opcodeRegistry = new OpCodeRegistry(
+            this.registerRegistry,
+            this.memory,
+            [new LoadOpCodeSupplier(), new AluOpCodeSupplier(), new JumpOpCodeSupplier(), new MiscOpCodeSupplier()],
+            [new ExtendedOpCodeSupplier()]
+        );
+        this.opcodeRegistry.checkInitializedOpcodes();
         this.cpu = new CPU(this.memory, this.registerRegistry.PC, this.opcodeRegistry, this.registerRegistry);
         this.gpu = new GPU(this.memory, renderer);
         this.renderer = renderer;

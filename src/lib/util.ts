@@ -20,4 +20,12 @@ function safeByteOverflow(n: number): number {
     return trueModulo(n, 256);
 }
 
-export {numberToHex, padZero, range, trueModulo, safeByteOverflow};
+function asTupleList<T>(map: {[key: number] : T}): [number, T][] {
+    const tupleList: [number, T][] = [];
+    Object.keys(map).map(key => parseInt(key, 10)).forEach(key => {
+        tupleList.push([key, map[key]]);
+    });
+    return tupleList;
+}
+
+export {numberToHex, padZero, range, trueModulo, safeByteOverflow, asTupleList};
