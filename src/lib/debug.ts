@@ -9,25 +9,25 @@ export class DEBUG {
         'OFF'
     ];
 
-    public static INFO(s: string) {
+    public static INFO<T>(obj: T) {
         if (this.comparePrecedence('INFO')) {
             //We do want to use console here, it is a logger
             // tslint:disable-next-line
-            console.log(s);
+            console.log(obj.toString());
         }
     }
 
-    public static WARN(s: string) {
+    public static WARN<T>(obj: T) {
         if (this.comparePrecedence('WARN')) {
-            console.warn(s);
+            console.warn(obj.toString());
         }
     }
 
-    public static ERR(s: string) {
+    public static ERR<T>(obj: T) {
         if (this.comparePrecedence('ERR')) {
             //We do want to use console here, it is a logger
             // tslint:disable-next-line
-            console.error(s);
+            console.error(obj.toString());
         }
     }
 

@@ -39,10 +39,6 @@ export class Memory {
     }
 
     public getWord(pointer: DoubleByte) {
-        //TODO GPU RETURN HACK
-        if (pointer.toNumber() === 0xFF44) {
-            return Byte.OF(0x90);
-        }
         const copy: Byte = new Byte();
         copy.copy(this.INTERNAL_DATA[pointer.toNumber()]);
         return copy;

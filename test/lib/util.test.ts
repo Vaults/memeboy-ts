@@ -1,4 +1,4 @@
-import {asTupleList, bitmask, numberToHex, padZero, range, trueModulo} from '../../src/lib/util';
+import {asTupleList, bitmask, numberToHex, padZero, range, sliceCircular, trueModulo} from '../../src/lib/util';
 
 describe('padZero', () => {
     it('sanity checks', () => {
@@ -50,5 +50,12 @@ describe('bitmask', () => {
     it('sanity checks', () => {
         expect(bitmask(7)).toEqual(1);
         expect(bitmask(0)).toEqual(128);
+    });
+});
+
+describe('sliceCircular', () => {
+    it('sanity checks', () => {
+        expect(sliceCircular([1, 2, 3, 4], 1, 3)).toEqual([2, 3]);
+        expect(sliceCircular([1, 2, 3, 4], 2, 5)).toEqual([3, 4, 1]);
     });
 });

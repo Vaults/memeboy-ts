@@ -1,7 +1,6 @@
 import {ALU} from './alu';
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
-import {DEBUG} from './lib/debug';
 import {Memory} from './memory';
 import {OpCode} from './opcodes/op-code';
 import {OpCodeRegistry} from './opcodes/op-code-registry';
@@ -10,6 +9,8 @@ import {Stack} from './stack';
 
 export class CPU {
 
+    public static readonly batchTime: number = 16; //ms
+    public static readonly clockSpeed: number = 4194304;
     private static readonly EXTENDED_OPS: number = 0xCB;
     private readonly opCodeRegistry: OpCodeRegistry;
     private readonly memory: Memory;
@@ -17,6 +18,8 @@ export class CPU {
     private readonly registerRegistry: RegisterRegistry;
     private readonly stack: Stack;
     private readonly alu: ALU;
+
+    public currentClock: number = 0;
 
     constructor(memory: Memory, programCounter: DoubleByte, opCodeRegistry: OpCodeRegistry, registerRegistry: RegisterRegistry) {
         this.memory = memory;
@@ -27,28 +30,13 @@ export class CPU {
         this.alu = new ALU(registerRegistry);
     }
 
-    public startGameboy() {
-        const start = new Date();
-        let instructionCount = 0;
-        while (this.programCounter.toNumber() !== 0x00FE) {
-            this.runInstruction();
-            instructionCount++;
-        }
-        const end = new Date();
-        const secsElapsed = (end.getTime() - start.getTime()) / 1000;
-        DEBUG.INFO(`${instructionCount / secsElapsed} OPERATIONS PER SECOND`);
-    }
-
     public run() {
-        let instructionCounter = 0;
-        while (instructionCounter < 100) {
+        while (this.currentClock < this.getBatchSize() && this.programCounter.toNumber() !== 0x00FE) {
             this.runInstruction();
-            instructionCounter++;
         }
-        setInterval(() => this.run(), 100);
     }
 
-    private runInstruction() {
+    public runInstruction() {
         const nextByte = this.getInstructionByte();
         if (nextByte.toNumber() !== CPU.EXTENDED_OPS) {
             const opCode: OpCode = this.opCodeRegistry.getOpCode(nextByte);
@@ -66,14 +54,18 @@ export class CPU {
 
                 opCode.logic(this.registerRegistry, this.memory, this.stack, this.alu, new DoubleByte(hi, lo));
             }
+            this.currentClock += opCode.cycles;
         } else {
             this.programCounter.increment();
             const extOpCodeByte = this.getInstructionByte();
             const extOpCode: OpCode = this.opCodeRegistry.getExtendedOpCode(extOpCodeByte);
             extOpCode.logic(this.registerRegistry, this.memory, this.stack, this.alu);
+            this.currentClock += extOpCode.cycles;
         }
+
         this.programCounter.increment();
     }
+
 
     private getInstructionByte(): Byte {
         return this.memory.getWord(this.programCounter);
@@ -93,5 +85,9 @@ export class CPU {
 
     private enableInterrupts() {
 
+    }
+
+    public getBatchSize() {
+        return CPU.clockSpeed / (CPU.batchTime / 1000);
     }
 }

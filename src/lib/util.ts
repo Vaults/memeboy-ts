@@ -32,4 +32,13 @@ function bitmask(index: number): number {
     return (1 << (7 - index));
 }
 
-export {numberToHex, padZero, range, trueModulo, safeByteOverflow, asTupleList, bitmask};
+function sliceCircular<T>(a: T[], start: number, end: number){
+    const right = a.slice(start, end);
+    let left: T[] = [];
+    if (end > a.length) {
+        left = a.slice(0, end - a.length);
+    }
+    return right.concat(left);
+}
+
+export {numberToHex, padZero, range, trueModulo, safeByteOverflow, asTupleList, bitmask, sliceCircular};

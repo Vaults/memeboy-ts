@@ -3,7 +3,7 @@ import {DoubleByte} from '../../double-byte';
 import {OpCodeLogic} from '../op-code';
 import {OpCodeSupplier} from './op-code-supplier';
 
-export class JumpOpCodeSupplier extends OpCodeSupplier{
+export class JumpOpCodeSupplier extends OpCodeSupplier {
 
     protected registerOpcodes(): void {
         const wrapNZ: (logic: OpCodeLogic) => OpCodeLogic = (logic) => (r, m, s, a, d) => { if (!r.FZ.isSet()) { logic(r, m, s, a, d); }};
@@ -32,7 +32,7 @@ export class JumpOpCodeSupplier extends OpCodeSupplier{
         this.add(0xC4, wrapNZ(jump), 12, 2);
         this.add(0xCC, wrapZ(jump), 12, 2);
         this.add(0xD4, wrapNC(jump), 12, 2);
-        this.add(0xDC, wrapNZ(jump), 12, 2);
+        this.add(0xDC, wrapC(jump), 12, 2);
 
         //RET
         this.add(0xC9, (r, m, s, a, d) => {

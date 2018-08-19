@@ -47,7 +47,11 @@ export class GameboyClassic {
 
     public start() {
         this.operational = true;
-        this.cpu.startGameboy();
+        setInterval(() => {
+            while (this.cpu.currentClock < this.cpu.getBatchSize() && this.registerRegistry.PC.toNumber() !== 0x00FE) {
+                this.cpu.runInstruction();
+                this.gpu.runInstruction(this.cpu.currentClock);
+            }}, CPU.batchTime);
     }
 
     public run() {
