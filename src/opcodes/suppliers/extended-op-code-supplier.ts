@@ -11,7 +11,7 @@ export class ExtendedOpCodeSupplier extends OpCodeSupplier {
     protected registerOpcodes(): void {
         const BIT: (d: Byte, index: number) => OpCodeLogic = (byte, index) => (r, m, s, a, d) => {
             //TODO neatify
-            if (byte.getBit(7- index).isSet()) {
+            if (byte.getBit(7 - index).isSet()) {
                 r.FZ.setState(0);
             } else {
                 r.FZ.setState(1);
@@ -27,29 +27,14 @@ export class ExtendedOpCodeSupplier extends OpCodeSupplier {
 
             r.FC.copy(byte.getBit(0));
             byte.rotate(-1);
-            byte.getBit(7).copy(temp);
-            //TODO: fix hack (bit updates do not trigger byte)
-            byte.flip();
-            byte.flip();
+            byte.setBit(7, temp);
 
             r.checkZero(byte);
             r.FN.setState(0);
             r.FH.setState(0);
         };
         const RR: (d: Byte) => OpCodeLogic = (byte) => (r, m, s, a, d) => {
-            const temp: Bit = Bit.RANDOM();
-            temp.copy(r.FC);
 
-            r.FC.copy(byte.getBit(7));
-            byte.rotate(1);
-            byte.getBit(0).copy(temp);
-            //TODO: fix hack (bit updates do not trigger byte)
-            byte.flip();
-            byte.flip();
-
-            r.checkZero(byte);
-            r.FN.setState(0);
-            r.FH.setState(0);
         };
         const SWAP: (d: Byte) => OpCodeLogic = (byte) => (r, m, s, a, d) => {
             byte.swap();

@@ -67,7 +67,7 @@ export class GPU {
                 this.shouldUpdate = false;
             }
             renderer.render(this.pixelMap);
-        }, 1000);
+        }, 1000 / 24);
     }
 
     private region(a: number, b: number): DoubleByte[] {

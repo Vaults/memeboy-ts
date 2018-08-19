@@ -1,4 +1,5 @@
 import {Bit} from './bit';
+import {BitByte} from './bit-byte';
 import {Byte} from './byte';
 import {DoubleByte} from './double-byte';
 
@@ -24,7 +25,7 @@ export class RegisterRegistry {
     public FH: Bit = Bit.RANDOM();
     public FC: Bit = Bit.RANDOM();
 
-    public F: Byte = new Byte([this.FZ, this.FN, this.FC, this.FH, Bit.RANDOM(), Bit.RANDOM(), Bit.RANDOM(), Bit.RANDOM()]);
+    public F: Byte = new BitByte([this.FZ, this.FN, this.FC, this.FH, Bit.RANDOM(), Bit.RANDOM(), Bit.RANDOM(), Bit.RANDOM()]);
     public AF: DoubleByte = new DoubleByte(this.A, this.F);
 
     public PC: DoubleByte = DoubleByte.OF(0x0000);

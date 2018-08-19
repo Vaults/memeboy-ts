@@ -88,10 +88,7 @@ export class MiscOpCodeSupplier extends OpCodeSupplier{
 
             r.FC.copy(r.A.getBit(0));
             r.A.rotate(-1);
-            r.A.getBit(7).copy(temp);
-            //TODO: fix hack (bit updates do not trigger byte)
-            r.A.flip();
-            r.A.flip();
+            r.A.setBit(7, temp);
 
             r.checkZero(r.A);
             r.FN.setState(0);

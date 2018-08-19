@@ -1,8 +1,8 @@
-import {Memory} from '../../src/memory';
-import {range} from '../../src/lib/util';
-import {DoubleByte} from '../../src/double-byte';
-import {TileSet} from '../../src/video/tile-set';
 import {Byte} from '../../src/byte';
+import {DoubleByte} from '../../src/double-byte';
+import {range} from '../../src/lib/util';
+import {Memory} from '../../src/memory';
+import {TileSet} from '../../src/video/tile-set';
 
 function createEmptyTestCase(): [TileSet, Memory] {
     const memory: Memory = new Memory();

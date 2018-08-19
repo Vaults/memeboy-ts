@@ -28,4 +28,8 @@ function asTupleList<T>(map: {[key: number] : T}): [number, T][] {
     return tupleList;
 }
 
-export {numberToHex, padZero, range, trueModulo, safeByteOverflow, asTupleList};
+function bitmask(index: number): number {
+    return (1 << (7 - index));
+}
+
+export {numberToHex, padZero, range, trueModulo, safeByteOverflow, asTupleList, bitmask};

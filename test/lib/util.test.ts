@@ -1,4 +1,4 @@
-import {asTupleList, numberToHex, padZero, range, trueModulo} from '../../src/lib/util';
+import {asTupleList, bitmask, numberToHex, padZero, range, trueModulo} from '../../src/lib/util';
 
 describe('padZero', () => {
     it('sanity checks', () => {
@@ -43,5 +43,12 @@ describe('asTupleList', () => {
             [47, 'c']
         ]
         expect(asTupleList(input)).toEqual(expected);
+    });
+});
+
+describe('bitmask', () => {
+    it('sanity checks', () => {
+        expect(bitmask(7)).toEqual(1);
+        expect(bitmask(0)).toEqual(128);
     });
 });

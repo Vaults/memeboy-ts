@@ -1,18 +1,12 @@
 import {Bit} from './bit';
-import {safeByteOverflow, trueModulo} from './lib/util';
+import {bitmask, safeByteOverflow, trueModulo} from './lib/util';
 
 export class Byte {
-    private INTERNAL_DATA: Bit[] = [0, 0, 0, 0, 0, 0, 0, 0].map((i: number) => new Bit(i));
 
-    private CACHED_NUMBER: number;
+    protected CACHED_NUMBER: number;
 
-    constructor(bits?: Bit[]) {
-        if (bits !== undefined) {
-            if (bits.length !== 8) { throw new Error(`Invalid bit length (${bits.length})!`); }
-            const byte: Byte = new Byte();
-            byte.INTERNAL_DATA = bits;
-            return byte;
-        }
+    constructor() {
+        this.CACHED_NUMBER = 0;
     }
 
     public static OF(b: number): Byte {
@@ -26,12 +20,11 @@ export class Byte {
     }
 
     public getBit(index: number): Bit {
-        if (index < 0 || index > 7) { throw new Error(`Index ${index} out of bounds!`); }
-        return this.INTERNAL_DATA[index];
+        this.checkIndex(index);
+        return new Bit(this.bit(index));
     }
 
     public toNumber(): number {
-        if (this.CACHED_NUMBER === undefined) { this.updateCachedNumber(); }
         return this.CACHED_NUMBER;
     }
 
@@ -65,17 +58,13 @@ export class Byte {
     }
 
     public flip() {
-        this.INTERNAL_DATA.forEach(b => b.flip());
-        this.updateCachedNumber();
+        this.CACHED_NUMBER = 255 - this.CACHED_NUMBER;
     }
 
     public swap() {
-        const hiNibble = this.INTERNAL_DATA.slice(0, 4);
-        const loNibble = this.INTERNAL_DATA.slice(4, 8);
-        const swapped: Byte = new Byte();
-        loNibble.concat(hiNibble).forEach((o, i) => swapped.getBit(i).copy(o));
-        this.updateCachedNumber(swapped.toNumber());
-        this.copy(swapped);
+        const lo = this.CACHED_NUMBER % 16
+        const hi = (this.CACHED_NUMBER - lo) / 16;
+        this.CACHED_NUMBER = lo * 16 + hi;
     }
 
     public rotate(shift: number) {
@@ -102,26 +91,29 @@ export class Byte {
         this.setByNumber(this.toNumber() ^ b.toNumber());
     }
 
-    private setByNumber(byte: number) {
-        if (byte < 0 || byte > 255) {throw new Error(`Byte ${byte} out of bounds!`); }
-        this.updateCachedNumber(byte);
-        const calc = (n: number) => (byte & (1 << (8 - n))) ? 1 : 0;
-        this.INTERNAL_DATA[0].setState(calc(1));
-        this.INTERNAL_DATA[1].setState(calc(2));
-        this.INTERNAL_DATA[2].setState(calc(3));
-        this.INTERNAL_DATA[3].setState(calc(4));
-        this.INTERNAL_DATA[4].setState(calc(5));
-        this.INTERNAL_DATA[5].setState(calc(6));
-        this.INTERNAL_DATA[6].setState(calc(7));
-        this.INTERNAL_DATA[7].setState(calc(8));
-    }
-
-    private updateCachedNumber(byte?: number) {
-        if (byte !== undefined) {
-            this.CACHED_NUMBER = byte;
+    public setBit(index: number, bit: Bit) {
+        this.checkIndex(index);
+        const mask = bitmask(index);
+        if (bit.isSet()) {
+            this.setByNumber(this.CACHED_NUMBER | mask);
         } else {
-            this.CACHED_NUMBER = parseInt(this.INTERNAL_DATA.map((b: Bit) => b.val()).join(''), 2);
+            this.setByNumber(this.CACHED_NUMBER & ~mask);
         }
-
     }
+
+    protected setByNumber(byte: number) {
+        if (byte < 0 || byte > 255) {throw new Error(`Byte ${byte} out of bounds!`); }
+        this.CACHED_NUMBER = byte;
+    }
+
+    protected bit(index: number) {
+        return (this.CACHED_NUMBER & bitmask(index)) ? 1 : 0;
+    }
+
+    private checkIndex(index: number) {
+        if (index < 0 || index > 7) {
+            throw new Error(`Index ${index} out of bounds!`);
+        }
+    }
+
 }
